@@ -14,7 +14,7 @@ class Language(models.TextChoices):
     
 class ReferralRequest(models.model):
     
-    age = models.PositiveSmallIntegerField(null = True, blank= True)
+    age = models.PositiveSmallIntegerField(null = True, blank= True) #change to age range for actual product due to HIPAA
     county = models.CharField(max_length = 100) 
     city = models.CharField(max_length = 100, blank= True)
     preferred_language = models.CharField(max_length = 30, choices = Language.choices, blank = True,)
