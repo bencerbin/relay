@@ -24,7 +24,7 @@ class ReferralRequest(models.model):
     
     created_at = models.DateTimeField(auto_now_add = True)
     
-class CommunityResources(models.model):
+class CommunityResource(models.model):
     name = models.CharField(max_length = 255)
     city = models.CharField(max_length = 100)
     state = models.CharField(max_length = 100)

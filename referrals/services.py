@@ -97,3 +97,61 @@ def evaluate_resource(
         supported_languages = {
             normalize(item) for item in resource.supported_languages
         }
+        
+        if normalize(referral.preferred_language) in supported_languages:
+            reasons.append(f"Supports {referral.preferred_language}." )
+            score+=10
+            
+        else:
+            warnings.append(
+                f"Does not support {referral.preferred_language}."
+            )
+            
+
+    if referral.insurance_type:
+        accepted_insurance = {
+            normalize(item) for item in resource.accepted_insurance
+        }
+
+        if not accepted_insurance:
+            warnings.append("Insurance requirements are not documented.")
+        elif normalize(referral.insurance_type) in accepted_insurance:
+            reasons.append(
+                f"Accepts {referral.insurance_type}."
+            )
+            score += 5
+        else:
+            failures.append(
+                f"Does not list {referral.insurance_type} as accepted."
+            )
+            
+        return EligibilityResult(
+            resource_id = resource.id,
+            resource_name = resource.name,
+            eligible = len(failures) == 0,
+            reasons = reasons + failures,
+            warnings = warnings,
+            score = score if not failures else 0
+        )
+        
+    def recommend_resources(referral: referralRequest,) -> list[EligibilityResult]:
+        resources = CommunityResource.objects.filter(active=True)
+        
+        results = [
+            evaluate_resource(referral, resource) 
+            for resource in resources
+        ]
+        
+        return sorted(
+            results,
+            key = lambda result: (
+                result.eligible,
+                result.score,
+            ),
+            reverse=True,
+        )
+        
+        
+        
+            
+        
