@@ -12,7 +12,7 @@ class Language(models.TextChoices):
     OTHER = "other", "Other"
     
     
-class ReferralRequest(models.model):
+class ReferralRequest(models.Model):
     
     age = models.PositiveSmallIntegerField(null = True, blank= True) #change to age range for actual product due to HIPAA
     county = models.CharField(max_length = 100) 
@@ -24,14 +24,14 @@ class ReferralRequest(models.model):
     
     created_at = models.DateTimeField(auto_now_add = True)
     
-class CommunityResource(models.model):
+class CommunityResource(models.Model):
     name = models.CharField(max_length = 255)
     city = models.CharField(max_length = 100)
     state = models.CharField(max_length = 100)
     description = models.TextField(max_length = 100)
     
-    counties_served = models_CharField(default = list)
-    cities_served = models_CharField(default = list)
+    counties_served = models.JSONField(default=list)
+    cities_served = models.JSONField(default=list)
     needs_addressed = models.JSONField(default=list)
     
     minimum_age = models.PositiveSmallIntegerField(null= True, blank = True)
@@ -47,6 +47,6 @@ class CommunityResource(models.model):
     source_excerpt = models.TextField(blank = True)
     last_verified_at = models.DateTimeField(null = True, blank = True)
     
-     def __str__(self) -> str:
+    def __str__(self) -> str:
         return self.name
     
