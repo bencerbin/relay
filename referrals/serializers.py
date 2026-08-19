@@ -12,7 +12,7 @@ class ReferralRequestSerializer(serializers.ModelSerializer):
             "city",
             "preferred_language",
             "insurance_type",
-            "wheelchair_required",
+            "wheelchair",
             "needs",
             "created_at",
         ]

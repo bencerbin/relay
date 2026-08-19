@@ -13,7 +13,7 @@ class EligibilityResult:
     score: int = 0
     
 def normalize(value:str) -> str:
-    retrun value.strip().lower()
+    return value.strip().lower()
     
     
 def evaluate_resource(
@@ -65,7 +65,7 @@ def evaluate_resource(
     
     
     if referral.age is None:
-        if resource.minimum_age is not None or resource_maximum_age is not None:
+        if resource.minimum_age is not None or resource.maximum_age is not None:
             warnings.append("Age is required to confirm eligibility.")
     else:
         if (
@@ -86,10 +86,10 @@ def evaluate_resource(
             reasons.append("Meets known requirements")
             score += 10
                 
-    if referral.wheelchair_required:
+    if referral.wheelchair:
         if resource.wheelchair_accessible:
             reasons.append("Wheelchair Accessible")    
-            score =+ 10
+            score += 10
         else:
             failures.append("Wheelchair accessibility is not available.")
             
@@ -125,31 +125,32 @@ def evaluate_resource(
                 f"Does not list {referral.insurance_type} as accepted."
             )
             
-        return EligibilityResult(
-            resource_id = resource.id,
-            resource_name = resource.name,
-            eligible = len(failures) == 0,
-            reasons = reasons + failures,
-            warnings = warnings,
-            score = score if not failures else 0
-        )
-        
-    def recommend_resources(referral: referralRequest,) -> list[EligibilityResult]:
-        resources = CommunityResource.objects.filter(active=True)
-        
-        results = [
-            evaluate_resource(referral, resource) 
-            for resource in resources
-        ]
-        
-        return sorted(
-            results,
-            key = lambda result: (
-                result.eligible,
-                result.score,
-            ),
-            reverse=True,
-        )
+    return EligibilityResult(
+        resource_id=resource.id,
+        resource_name=resource.name,
+        eligible=len(failures) == 0,
+        reasons=reasons + failures,
+        warnings=warnings,
+        score=score if not failures else 0,
+    )
+
+
+def recommend_resources(referral: ReferralRequest) -> list[EligibilityResult]:
+    resources = CommunityResource.objects.filter(active=True)
+
+    results = [
+        evaluate_resource(referral, resource)
+        for resource in resources
+    ]
+
+    return sorted(
+        results,
+        key=lambda result: (
+            result.eligible,
+            result.score,
+        ),
+        reverse=True,
+    )
         
         
         
