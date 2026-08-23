@@ -42,6 +42,9 @@ def evaluate_resource(
     else:
         failures.append("Does not provide a requested service.")
         
+        #NOTE: SHOULD ADJACENT SERVICES BE LISTED?
+        #POTENTIALLY INCLUDE IN A NEW UPDATE
+        
     #County
     counties = {normalize(item) for item in resource.counties_served}
     
