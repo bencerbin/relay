@@ -58,9 +58,9 @@ def evaluate_resource(
     # #City
     # cities = {normalize(item) for item in resource.cities_served}
     
-    # if normalize(referral.city) in cities:
-    #     reasons.append(f"Serves {referral.city}")
-    #     score+=15
+    if normalize(referral.city) in cities:
+        reasons.append(f"Serves {referral.city}")
+        score+=15
         
     # else: 
     
