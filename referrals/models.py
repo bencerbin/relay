@@ -33,6 +33,13 @@ class CommunityResource(models.Model):
     cities_served = models.JSONField(default=list)
     needs_addressed = models.JSONField(default=list)
     
+    healthcare_specialty = models.JSONField(default=list, null = True, blank = True)
+    population_served = models.JSONField(default=list, null = True, blank = True)
+    service_modality = models.JSONField(default=list, null = True, blank = True)
+    program_purpose = models.JSONField(default=list, null = True, blank =  True)
+    provider_metadata = models.JSONField(default = list, null = True, blank = True)
+    
+    
     minimum_age = models.PositiveSmallIntegerField(null= True, blank = True)
     maximum_age = models.PositiveSmallIntegerField(null = True, blank = True)
     
