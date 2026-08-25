@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import ReferralRequestSerializer
-from .services import recommend_resources
+from .recommendation import recommend_resources
 
 
 class RecommendationView(APIView):
