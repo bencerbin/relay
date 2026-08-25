@@ -5,6 +5,7 @@ class ResourceCategory(models.TextChoices):
     FOOD_DELIVERY = "food_delivery", "Food Delivery"
     HOUSING = "housing", "Housing"
     TRANSPORTATION = "transportation", "Transportation"
+    HEALTHCARE = "healthcare", "Healthcare"
     
 class Language(models.TextChoices):
     ENGLISH = "english", "English"
@@ -20,6 +21,10 @@ class ReferralRequest(models.Model):
     insurance_type = models.CharField(max_length = 100, blank= True)
     wheelchair = models.BooleanField(default=False)
     needs = models.JSONField(default=list)
+    healthcare_specialties = models.JSONField(default=list)
+    population_context = models.JSONField(default=list)
+    service_modalities = models.JSONField(default=list)
+    program_purposes = models.JSONField(default=list)
     
     created_at = models.DateTimeField(auto_now_add = True)
     
@@ -33,11 +38,11 @@ class CommunityResource(models.Model):
     cities_served = models.JSONField(default=list)
     needs_addressed = models.JSONField(default=list)
     
-    healthcare_specialty = models.JSONField(default=list, null = True, blank = True)
-    population_served = models.JSONField(default=list, null = True, blank = True)
-    service_modality = models.JSONField(default=list, null = True, blank = True)
-    program_purpose = models.JSONField(default=list, null = True, blank =  True)
-    provider_metadata = models.JSONField(default = list, null = True, blank = True)
+    healthcare_specialties = models.JSONField(default=list)
+    population_served = models.JSONField(default=list)
+    service_modalities = models.JSONField(default=list)
+    program_purposes = models.JSONField(default=list)
+    provider_metadata = models.JSONField(default=dict)
     
     
     minimum_age = models.PositiveSmallIntegerField(null= True, blank = True)

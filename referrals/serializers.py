@@ -14,6 +14,10 @@ class ReferralRequestSerializer(serializers.ModelSerializer):
             "insurance_type",
             "wheelchair",
             "needs",
+            "healthcare_specialties",
+            "population_context",
+            "service_modalities",
+            "program_purposes",
             "created_at",
         ]
         read_only_fields=["id","created_at"]

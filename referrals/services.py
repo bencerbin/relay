@@ -44,6 +44,86 @@ def evaluate_resource(
         
         #NOTE: SHOULD ADJACENT SERVICES BE LISTED?
         #POTENTIALLY INCLUDE IN A NEW UPDATE
+
+    requested_specialties = {
+        normalize(item) for item in referral.healthcare_specialties
+    }
+    available_specialties = {
+        normalize(item) for item in resource.healthcare_specialties
+    }
+
+    if requested_specialties:
+        matching_specialties = requested_specialties & available_specialties
+        if matching_specialties:
+            reasons.append(
+                "Offers requested specialty: "
+                f"{', '.join(sorted(matching_specialties))}."
+            )
+            score += 20
+        elif available_specialties:
+            failures.append("Does not offer a requested healthcare specialty.")
+        else:
+            warnings.append("Healthcare specialties are not documented.")
+
+    requested_populations = {
+        normalize(item) for item in referral.population_context
+    }
+    available_populations = {
+        normalize(item) for item in resource.population_served
+    }
+
+    if requested_populations:
+        matching_populations = requested_populations & available_populations
+        if matching_populations:
+            reasons.append(
+                "Serves requested population: "
+                f"{', '.join(sorted(matching_populations))}."
+            )
+            score += 10
+        elif available_populations:
+            failures.append("Does not serve the requested population.")
+        else:
+            warnings.append("Population served is not documented.")
+
+    requested_modalities = {
+        normalize(item) for item in referral.service_modalities
+    }
+    available_modalities = {
+        normalize(item) for item in resource.service_modalities
+    }
+
+    if requested_modalities:
+        matching_modalities = requested_modalities & available_modalities
+        if matching_modalities:
+            reasons.append(
+                "Offers requested service format: "
+                f"{', '.join(sorted(matching_modalities))}."
+            )
+            score += 10
+        elif available_modalities:
+            failures.append("Does not offer a requested service format.")
+        else:
+            warnings.append("Service format is not documented.")
+
+    requested_purposes = {
+        normalize(item) for item in referral.program_purposes
+    }
+    available_purposes = {
+        normalize(item) for item in resource.program_purposes
+    }
+
+    if requested_purposes:
+        matching_purposes = requested_purposes & available_purposes
+        if matching_purposes:
+            reasons.append(
+                "Supports requested purpose: "
+                f"{', '.join(sorted(matching_purposes))}."
+            )
+            score += 10
+        elif available_purposes:
+            failures.append("Does not support the requested program purpose.")
+        else:
+            warnings.append("Program purpose is not documented.")
         
     #County
     counties = {normalize(item) for item in resource.counties_served}
@@ -55,14 +135,13 @@ def evaluate_resource(
     else: 
         failures.append(f"Does not serve {referral.county} County.")
         
-    # #City
-    # cities = {normalize(item) for item in resource.cities_served}
-    
-    if normalize(referral.city) in cities:
-        reasons.append(f"Serves {referral.city}")
-        score+=15
-        
-    # else: 
+    # City is an additional score when supplied, but county remains the
+    # minimum geographic requirement for a recommendation.
+    if referral.city:
+        cities = {normalize(item) for item in resource.cities_served}
+        if normalize(referral.city) in cities:
+            reasons.append(f"Serves {referral.city}.")
+            score += 15
     
     # Age
     
