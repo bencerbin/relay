@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 class ResourceCategory(models.TextChoices):
@@ -27,6 +29,35 @@ class ReferralRequest(models.Model):
     program_purposes = models.JSONField(default=list)
     
     created_at = models.DateTimeField(auto_now_add = True)
+
+
+class ReferralSession(models.Model):
+    class Status(models.TextChoices):
+        COLLECTING = "collecting", "Collecting information"
+        READY = "ready", "Ready for search"
+        COMPLETED = "completed", "Completed"
+        ABANDONED = "abandoned", "Abandoned"
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+    draft = models.JSONField(default=dict)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.COLLECTING,
+    )
+    referral_request = models.OneToOneField(
+        ReferralRequest,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="session",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
 class CommunityResource(models.Model):
     name = models.CharField(max_length = 255)
