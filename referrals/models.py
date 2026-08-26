@@ -90,5 +90,6 @@ class CommunityResource(models.Model):
     last_verified_at = models.DateTimeField(null = True, blank = True)
     
     def __str__(self) -> str:
+        """Return the resource name for readable admin and shell output."""
         return self.name
     

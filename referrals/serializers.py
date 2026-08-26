@@ -23,6 +23,7 @@ class ReferralRequestSerializer(serializers.ModelSerializer):
         read_only_fields=["id","created_at"]
         
     def validate_needs(self, value: list[str]) -> list[str]:
+        """Ensure a finalized referral contains at least one string need."""
         if not value:
             raise serializers.ValidationError("At least one resource need is required.")
         

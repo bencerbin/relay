@@ -50,7 +50,7 @@ CONTEXT_REQUIRED_FIELDS = {
 
 
 def _normalize_list(value: Any, field_name: str) -> list[str]:
-    """Convert one extracted list field into a clean, canonical list."""
+    """Normalize one extracted list field before it enters the session draft."""
     if isinstance(value, str):
         values = [value]
     elif isinstance(value, (list, tuple)):
@@ -78,7 +78,8 @@ def merge_extracted_data(
 
     List fields are combined without duplicates. Scalar fields are replaced
     by a newer nonempty value. ``None`` and empty strings are ignored so an
-    uncertain extraction cannot erase information already collected.
+    uncertain extraction cannot erase information already collected. This is
+    the intake pipeline's bridge from one extraction result to the next draft.
     """
     if not isinstance(draft, Mapping):
         raise TypeError("draft must be a dictionary-like object.")
@@ -186,6 +187,7 @@ def get_required_fields(draft: Mapping[str, Any]) -> list[str]:
 
 
 def _is_missing(draft: Mapping[str, Any], field_name: str) -> bool:
+    """Return whether a draft field lacks a usable answer for intake."""
     if field_name not in draft:
         return True
 

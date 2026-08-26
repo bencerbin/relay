@@ -14,6 +14,7 @@ class EligibilityResult:
 
 
 def normalize(value: str) -> str:
+    """Normalize a value so matching is case-insensitive and whitespace-safe."""
     return value.strip().lower()
 
 
@@ -21,6 +22,7 @@ def evaluate_resource(
     referral: ReferralRequest,
     resource: CommunityResource,
 ) -> EligibilityResult:
+    """Score one resource against a finalized referral request."""
     reasons: list[str] = []
     warnings: list[str] = []
     failures: list[str] = []
@@ -199,6 +201,7 @@ def evaluate_resource(
 
 
 def recommend_resources(referral: ReferralRequest) -> list[EligibilityResult]:
+    """Evaluate and rank all active resources for a finalized referral."""
     resources = CommunityResource.objects.filter(active=True)
 
     results = [

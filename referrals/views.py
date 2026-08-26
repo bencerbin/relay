@@ -8,6 +8,7 @@ from .recommendation import recommend_resources
 
 class RecommendationView(APIView):
     def post(self, request):
+        """Validate a structured referral and return ranked recommendations."""
         serializer = ReferralRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
