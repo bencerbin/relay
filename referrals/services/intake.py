@@ -35,6 +35,19 @@ LIST_FIELDS = frozenset(
     }
 )
 
+STATIC_REQUIRED_FIELDS = frozenset({
+    "needs",
+    "county",
+})
+
+CONTEXT_REQUIRED_FIELDS = {
+    "healthcare": frozenset({"healthcare_specialties"}),
+    "food_delivery": frozenset({"city"}), #THIS IS SOMETHING THAT MIGHT NEED  TO CHANGE... CAN WE USE ZIP CODE? ADDRESS?
+    "housing": frozenset(),
+}
+
+
+
 
 def _normalize_list(value: Any, field_name: str) -> list[str]:
     """Convert one extracted list field into a clean, canonical list."""
@@ -142,3 +155,10 @@ def finalize_session(session: ReferralSession) -> ReferralRequest:
         )
 
         return referral
+
+def get_contextual_required_fields(draft: Mapping [str, Any]) -> list[str]:
+    required_fields = [*STATIC_REQUIRED_FIELDS,
+
+def get_missing_required_fields(draft: Mapping [str, Any]) -> list[str]:
+    
+    
