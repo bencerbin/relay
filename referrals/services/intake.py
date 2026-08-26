@@ -156,9 +156,55 @@ def finalize_session(session: ReferralSession) -> ReferralRequest:
 
         return referral
 
-def get_contextual_required_fields(draft: Mapping [str, Any]) -> list[str]:
-    required_fields = [*STATIC_REQUIRED_FIELDS,
+def get_contextual_required_fields(
+    draft: Mapping[str, Any],
+) -> list[str]:
+    """Return fields required by the needs currently in the draft.
 
-def get_missing_required_fields(draft: Mapping [str, Any]) -> list[str]:
-    
-    
+    The static minimum fields are deliberately not included here. This
+    function only answers: "What additional fields does this context need?"
+    """
+    if not isinstance(draft, Mapping):
+        raise TypeError("draft must be a dictionary-like object.")
+
+    needs = _normalize_list(draft.get("needs", []), "needs")
+    contextual_fields: set[str] = set()
+
+    for need in needs:
+        contextual_fields.update(
+            CONTEXT_REQUIRED_FIELDS.get(need, frozenset())
+        )
+
+    return sorted(contextual_fields)
+
+
+def get_required_fields(draft: Mapping[str, Any]) -> list[str]:
+    """Return the complete requirement set for the current draft."""
+    required_fields = set(STATIC_REQUIRED_FIELDS)
+    required_fields.update(get_contextual_required_fields(draft))
+    return sorted(required_fields)
+
+
+def _is_missing(draft: Mapping[str, Any], field_name: str) -> bool:
+    if field_name not in draft:
+        return True
+
+    value = draft[field_name]
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, tuple)):
+        return not value
+
+    # False is a meaningful answer, so it must not count as missing.
+    return False
+
+
+def get_missing_required_fields(draft: Mapping[str, Any]) -> list[str]:
+    """Return required fields that have not been answered yet."""
+    return [
+        field_name
+        for field_name in get_required_fields(draft)
+        if _is_missing(draft, field_name)
+    ]
