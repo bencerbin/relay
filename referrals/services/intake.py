@@ -4,7 +4,7 @@ from typing import Any
 from django.db import transaction
 
 from ..models import ReferralRequest, ReferralSession
-from ..serializers import ReferralRequestSerializer
+from ..serializers import ReferralRequestSerializer, IntakeMessageSerializer
 
 
 Draft = dict[str, Any]
@@ -210,3 +210,12 @@ def get_missing_required_fields(draft: Mapping[str, Any]) -> list[str]:
         for field_name in get_required_fields(draft)
         if _is_missing(draft, field_name)
     ]
+
+
+def process_intake_message(
+    session: ReferralSession,
+    message: str,
+    quick_search: bool = False,
+) -> dict:  
+    
+    serializer = 

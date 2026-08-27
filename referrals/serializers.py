@@ -32,6 +32,13 @@ class ReferralRequestSerializer(serializers.ModelSerializer):
         
         return value
     
+class IntakeMessageSerializer(serializers.Serializer):
+    session_id = serializers.UUIDField(
+        required=False,
+        allow_null=True,
+    )
+    message = serializers.CharField()
+    quick_search = serializers.BooleanField(default=False)
     
     
 class CommunityResourceSerializer(serializers.ModelSerializer):
