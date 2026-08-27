@@ -4,8 +4,9 @@ from typing import Any
 from django.db import transaction
 
 from ..models import ReferralRequest, ReferralSession
-from ..serializers import ReferralRequestSerializer, IntakeMessageSerializer
+from ..serializers import ReferralRequestSerializer
 
+from .extraction import extract_fields
 
 Draft = dict[str, Any]
 
@@ -44,6 +45,13 @@ CONTEXT_REQUIRED_FIELDS = {
     "healthcare": frozenset({"healthcare_specialties"}),
     "food_delivery": frozenset({"city"}), #THIS IS SOMETHING THAT MIGHT NEED  TO CHANGE... CAN WE USE ZIP CODE? ADDRESS?
     "housing": frozenset(),
+}
+
+FIELD_QUESTIONS = {
+    "needs": "What kind of help are you looking for?",
+    "county": "What county are you located in?",
+    "city": "What city are you located in?",
+    "healthcare_specialties": "What type of healthcare specialty do you need?",
 }
 
 
@@ -215,7 +223,64 @@ def get_missing_required_fields(draft: Mapping[str, Any]) -> list[str]:
 def process_intake_message(
     session: ReferralSession,
     message: str,
-    quick_search: bool = False,
-) -> dict:  
-    
-    serializer = 
+) -> dict[str, Any]:
+    """Process one chat turn and persist the updated intake session.
+
+    This function extracts and merges the new message, recalculates missing
+    requirements, and returns either the next question or a ready status. It
+    deliberately leaves finalization and recommendations to a later search
+    action.
+    """
+    if not isinstance(session, ReferralSession):
+        raise TypeError("session must be a ReferralSession instance.")
+    if not isinstance(message, str):
+        raise TypeError("message must be a string.")
+
+    with transaction.atomic():
+        locked_session = (
+            ReferralSession.objects
+            .select_for_update()
+            .get(pk=session.pk)
+        )
+
+        if locked_session.status == ReferralSession.Status.ABANDONED:
+            raise ValueError("Cannot process an abandoned referral session.")
+
+        if locked_session.referral_request_id:
+            return {
+                "session_id": str(locked_session.id),
+                "status": locked_session.status,
+                "draft": locked_session.draft,
+                "missing_fields": [],
+                "question": None,
+                "referral_request_id": locked_session.referral_request_id,
+            }
+
+        extracted_data = extract_fields(message)
+        updated_draft = merge_extracted_data(
+            locked_session.draft,
+            extracted_data,
+        )
+        missing_fields = get_missing_required_fields(updated_draft)
+
+        locked_session.draft = updated_draft
+        locked_session.status = (
+            ReferralSession.Status.COLLECTING
+            if missing_fields
+            else ReferralSession.Status.READY
+        )
+        locked_session.save(update_fields=["draft", "status", "updated_at"])
+
+        next_question = (
+            FIELD_QUESTIONS.get(missing_fields[0])
+            if missing_fields
+            else None
+        )
+
+        return {
+            "session_id": str(locked_session.id),
+            "status": locked_session.status,
+            "draft": locked_session.draft,
+            "missing_fields": missing_fields,
+            "question": next_question,
+        }
