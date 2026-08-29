@@ -153,6 +153,13 @@ def finalize_session(session: ReferralSession) -> ReferralRequest:
         if locked_session.status == ReferralSession.Status.ABANDONED:
             raise ValueError("Cannot finalize an abandoned referral session.")
 
+        missing_fields = get_missing_required_fields(locked_session.draft)
+        if missing_fields:
+            missing = ", ".join(missing_fields)
+            raise ValueError(
+                f"Cannot finalize session; missing required field(s): {missing}."
+            )
+
         serializer = ReferralRequestSerializer(data=locked_session.draft)
         serializer.is_valid(raise_exception=True)
         referral = serializer.save()
