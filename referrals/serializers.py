@@ -38,7 +38,6 @@ class IntakeMessageSerializer(serializers.Serializer):
         allow_null=True,
     )
     message = serializers.CharField()
-    quick_search = serializers.BooleanField(default=False)
     
     
 class CommunityResourceSerializer(serializers.ModelSerializer):
