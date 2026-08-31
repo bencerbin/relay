@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import IntakeView, RecommendationView
+from .views import IntakeView, RecommendationView, SessionSearchView
 
 urlpatterns = [
     path(
@@ -15,9 +15,9 @@ urlpatterns = [
     ),
     path(
         "intake/sessions/<uuid:session_id>/search/",
-        SessionSearch.as_view(),
-        name="session-search"
-    )
+        SessionSearchView.as_view(),
+        name="session-search",
+    ),
 ]
 
 # from django.contrib import admin

@@ -3,12 +3,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import ReferralRequestSerializer
-from .recommendation import recommend_resources
-
 from .models import ReferralSession
-from .serializers import IntakeMessageSerializer
-from .services.intake import (process_intake_message, finalize_session, get_missing_required_fields,)
+from .recommendation import recommend_resources
+from .serializers import IntakeMessageSerializer, ReferralRequestSerializer
+from .services.intake import (
+    finalize_session,
+    get_missing_required_fields,
+    process_intake_message,
+)
 
 
 class RecommendationView(APIView):
@@ -39,15 +41,15 @@ class RecommendationView(APIView):
             response_data,
             status=status.HTTP_201_CREATED,
         )
-        
-        
+
+
 class IntakeView(APIView):
     def post(self, request):
         serializer = IntakeMessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         session_id = serializer.validated_data.get("session_id")
-        
+
         if session_id:
             session = get_object_or_404(
                 ReferralSession,
@@ -55,38 +57,39 @@ class IntakeView(APIView):
             )
         else:
             session = ReferralSession.objects.create()
-            
+
         result = process_intake_message(
             session=session,
-            message=serializer.validated_data.get("message")
-            )
-        
+            message=serializer.validated_data["message"],
+        )
+
         return Response(
             result,
-            status = status.HTTP_200_OK,
+            status=status.HTTP_200_OK,
         )
-        
+
+
 class SessionSearchView(APIView):
     def post(self, request, session_id):
         session = get_object_or_404(
             ReferralSession,
             pk=session_id,
         )
-        
+
         missing_fields = get_missing_required_fields(session.draft)
 
         if missing_fields:
             return Response(
                 {
-                    "detail": "This session is not ready for searching."
+                    "detail": "This session is not ready for searching.",
                     "missing_fields": missing_fields,
                 },
-                status = status.HTTP_409_CONFLICT,
+                status=status.HTTP_409_CONFLICT,
             )
             
         referral = finalize_session(session)
-        result = recommend_resources(referral)
-        
+        results = recommend_resources(referral)
+
         return Response(
             {
                 "session_id": str(session.id),
@@ -103,6 +106,5 @@ class SessionSearchView(APIView):
                     for result in results
                 ],
             },
-            status = status.HTTP_200_OK,
+            status=status.HTTP_200_OK,
         )
-        
