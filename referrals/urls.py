@@ -13,6 +13,11 @@ urlpatterns = [
         IntakeView.as_view(),
         name="intake",
     ),
+    path(
+        "intake/sessions/<uuid:session_id>/search/",
+        SessionSearch.as_view(),
+        name="session-search"
+    )
 ]
 
 # from django.contrib import admin
