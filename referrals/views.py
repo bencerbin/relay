@@ -8,7 +8,7 @@ from .recommendation import recommend_resources
 
 from .models import ReferralSession
 from .serializers import IntakeMessageSerializer
-from .services.intake import process_intake_message
+from .services.intake import (process_intake_message, finalize_session, get_missing_required_fields,)
 
 
 class RecommendationView(APIView):
@@ -65,3 +65,44 @@ class IntakeView(APIView):
             result,
             status = status.HTTP_200_OK,
         )
+        
+class SessionSearchView(APIView):
+    def post(self, request, session_id):
+        session = get_object_or_404(
+            ReferralSession,
+            pk=session_id,
+        )
+        
+        missing_fields = get_missing_required_fields(session.draft)
+
+        if missing_fields:
+            return Response(
+                {
+                    "detail": "This session is not ready for searching."
+                    "missing_fields": missing_fields,
+                },
+                status = status.HTTP_409_CONFLICT,
+            )
+            
+        referral = finalize_session(session)
+        result = recommend_resources(referral)
+        
+        return Response(
+            {
+                "session_id": str(session.id),
+                "referral": ReferralRequestSerializer(referral).data,
+                "recommendations": [
+                    {
+                        "resource_id": result.resource_id,
+                        "resource_name": result.resource_name,
+                        "eligible": result.eligible,
+                        "score": result.score,
+                        "reasons": result.reasons,
+                        "warnings": result.warnings,
+                    }
+                    for result in results
+                ],
+            },
+            status = status.HTTP_200_OK,
+        )
+        

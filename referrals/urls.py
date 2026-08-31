@@ -1,12 +1,17 @@
 from django.urls import path
 
-from .views import RecommendationView
+from .views import IntakeView, RecommendationView
 
 urlpatterns = [
     path(
         "recommendations/",
         RecommendationView.as_view(),
         name="recommendations",
+    ),
+    path(
+        "intake/",
+        IntakeView.as_view(),
+        name="intake",
     ),
 ]
 
