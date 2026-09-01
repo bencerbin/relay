@@ -2,7 +2,27 @@ from rest_framework import serializers
 
 from .models import CommunityResource, ReferralRequest
 
+
+class StrictStringField(serializers.CharField):
+    """A CharField that rejects non-string JSON values instead of coercing them."""
+
+    default_error_messages = {
+        "invalid": "Expected a string.",
+    }
+
+    def to_internal_value(self, data):
+        if not isinstance(data, str):
+            self.fail("invalid")
+
+        return super().to_internal_value(data)
+
+
 class ReferralRequestSerializer(serializers.ModelSerializer):
+    needs = serializers.ListField(
+        child=StrictStringField(),
+        allow_empty=False,
+    )
+
     class Meta:
         model = ReferralRequest
         fields = [

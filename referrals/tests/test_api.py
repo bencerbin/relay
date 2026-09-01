@@ -117,6 +117,48 @@ class RecommendationAPITests(APITestCase):
         self.assertIn("needs", response.data)
         self.assertEqual(ReferralRequest.objects.count(), 0)
 
+    def test_missing_needs_returns_bad_request(self):
+        payload = self.valid_payload()
+        payload.pop("needs")
+
+        response = self.client.post(
+            self.url,
+            payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("needs", response.data)
+        self.assertEqual(ReferralRequest.objects.count(), 0)
+
+    def test_string_needs_returns_bad_request(self):
+        payload = self.valid_payload()
+        payload["needs"] = "food_delivery"
+
+        response = self.client.post(
+            self.url,
+            payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("needs", response.data)
+        self.assertEqual(ReferralRequest.objects.count(), 0)
+
+    def test_non_string_need_item_returns_bad_request(self):
+        payload = self.valid_payload()
+        payload["needs"] = [123]
+
+        response = self.client.post(
+            self.url,
+            payload,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("needs", response.data)
+        self.assertEqual(ReferralRequest.objects.count(), 0)
+
     def test_mismatched_county_resource_is_ineligible(self):
         response = self.client.post(
             self.url,
