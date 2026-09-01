@@ -243,6 +243,11 @@ def process_intake_message(
     if not isinstance(message, str):
         raise TypeError("message must be a string.")
 
+    # Extraction may eventually call a slow local or remote LLM. Run it
+    # before opening the transaction so the database row is not locked while
+    # waiting for model output.
+    extracted_data = extract_fields(message)
+
     with transaction.atomic():
         locked_session = (
             ReferralSession.objects
@@ -263,7 +268,6 @@ def process_intake_message(
                 "referral_request_id": locked_session.referral_request_id,
             }
 
-        extracted_data = extract_fields(message)
         updated_draft = merge_extracted_data(
             locked_session.draft,
             extracted_data,
