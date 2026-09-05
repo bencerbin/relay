@@ -243,10 +243,28 @@ def process_intake_message(
     if not isinstance(message, str):
         raise TypeError("message must be a string.")
 
-    # Extraction may eventually call a slow local or remote LLM. Run it
-    # before opening the transaction so the database row is not locked while
-    # waiting for model output.
-    extracted_data = extract_fields(message)
+    # Read without a row lock so a slow LLM call cannot hold a transaction
+    # open. The session is locked and reloaded again before saving below.
+    session_snapshot = ReferralSession.objects.get(pk=session.pk)
+
+    if session_snapshot.status == ReferralSession.Status.ABANDONED:
+        raise ValueError("Cannot process an abandoned referral session.")
+
+    if session_snapshot.referral_request_id:
+        return {
+            "session_id": str(session_snapshot.id),
+            "status": session_snapshot.status,
+            "draft": session_snapshot.draft,
+            "missing_fields": [],
+            "question": None,
+            "referral_request_id": session_snapshot.referral_request_id,
+        }
+
+    extracted_data = extract_fields(
+        message,
+        current_draft=session_snapshot.draft,
+        missing_fields=get_missing_required_fields(session_snapshot.draft),
+    )
 
     with transaction.atomic():
         locked_session = (

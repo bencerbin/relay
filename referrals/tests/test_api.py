@@ -1,8 +1,12 @@
+import os
+from unittest.mock import patch
+
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from referrals.models import CommunityResource, ReferralRequest
+from referrals.models import CommunityResource, ReferralRequest, ReferralSession
 
 
 class RecommendationAPITests(APITestCase):
@@ -173,3 +177,23 @@ class RecommendationAPITests(APITestCase):
         )
         self.assertFalse(new_haven_result["eligible"])
         self.assertEqual(new_haven_result["score"], 0)
+
+
+class IntakeAvailabilityAPITests(APITestCase):
+    """Test the intake endpoint's behavior when the LLM provider is down."""
+
+    @override_settings(EXTRACTION_BACKEND="groq")
+    def test_unavailable_groq_returns_service_unavailable(self):
+        with patch.dict(os.environ, {"GROQ_API_KEY": ""}, clear=False):
+            response = self.client.post(
+                reverse("intake"),
+                {"message": "I need meals delivered."},
+                format="json",
+            )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertIn("temporarily unavailable", response.data["detail"])
+        self.assertEqual(ReferralSession.objects.count(), 0)

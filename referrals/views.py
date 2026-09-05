@@ -11,6 +11,7 @@ from .services.intake import (
     get_missing_required_fields,
     process_intake_message,
 )
+from .services.llm_extraction import GroqExtractionError
 
 
 class RecommendationView(APIView):
@@ -50,6 +51,8 @@ class IntakeView(APIView):
 
         session_id = serializer.validated_data.get("session_id")
 
+        is_new_session = session_id is None
+
         if session_id:
             session = get_object_or_404(
                 ReferralSession,
@@ -58,10 +61,24 @@ class IntakeView(APIView):
         else:
             session = ReferralSession.objects.create()
 
-        result = process_intake_message(
-            session=session,
-            message=serializer.validated_data["message"],
-        )
+        try:
+            result = process_intake_message(
+                session=session,
+                message=serializer.validated_data["message"],
+            )
+        except GroqExtractionError:
+            if is_new_session:
+                session.delete()
+
+            return Response(
+                {
+                    "detail": (
+                        "Intake extraction is temporarily unavailable. "
+                        "Please try again."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         return Response(
             result,

@@ -1,5 +1,8 @@
 import re
+from collections.abc import Mapping, Sequence
 from typing import Any
+
+from django.conf import settings
 
 
 NEED_PHRASES = {
@@ -40,11 +43,11 @@ SPECIALTY_NAMES = (
 )
 
 
-def extract_fields(message: str) -> dict[str, Any]:
-    """Extract a temporary set of referral fields from one user message.
+def extract_fields_deterministic(message: str) -> dict[str, Any]:
+    """Extract referral fields with the temporary keyword-based fallback.
 
-    This deterministic implementation gives the intake pipeline a usable
-    interface while the production LLM extractor is still being designed.
+    This is useful for local development and tests when the LLM backend is
+    unavailable.
     """
     if not isinstance(message, str):
         raise TypeError("message must be a string.")
@@ -122,3 +125,27 @@ def extract_fields(message: str) -> dict[str, Any]:
         extracted["program_purposes"] = ["ongoing_support"]
 
     return extracted
+
+
+def extract_fields(
+    message: str,
+    *,
+    current_draft: Mapping[str, Any] | None = None,
+    missing_fields: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Route extraction to the configured backend while keeping one interface."""
+    backend = getattr(settings, "EXTRACTION_BACKEND", "deterministic").lower()
+
+    if backend == "groq":
+        from .llm_extraction import extract_fields_with_groq
+
+        return extract_fields_with_groq(
+            message,
+            current_draft=current_draft,
+            missing_fields=missing_fields,
+        )
+
+    if backend != "deterministic":
+        raise ValueError(f"Unknown extraction backend: {backend}")
+
+    return extract_fields_deterministic(message)
