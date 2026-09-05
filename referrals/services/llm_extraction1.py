@@ -80,3 +80,55 @@ EXTRACTION_SCHEMA = {
     ],
     "additionalProperties": False,
 }
+
+SYSTEM_INSTRUCTIONS = """
+You extract referral information from one user's message.
+
+Return only the fields in the supplied JSON schema.
+Extract only information the user stated or clearly answered. Do not guess.
+Use canonical need values: food, food_delivery, healthcare, housing, and
+transportation. Use lowercase canonical values for list fields and languages.
+If a value is not present, return null for scalar fields or an empty list for
+list fields.
+
+The current draft and missing fields are context. They help interpret short
+follow-up answers such as a city name answering a pending city question.
+""".strip()
+
+def extract_fields_with_groq(
+    message: str,
+    current_draft: Mapping[str, Any] | None = none,
+    missing_fields: Sequence[str],
+) -> dict[str, Any]:
+    
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise GroqExtractionError("GROQ_API_KEY is not configured.")
+    
+     request_context = {
+        "message": message,
+        "current_draft": dict(current_draft or {}),
+        "missing_fields": list(missing_fields or []),
+    }
+
+    client = Groq(api_key=api_key)
+    
+    try:
+        response = client.chat.completions.create(
+            model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
+            messages = [
+                {"role": "system", "content": SYSTEM_INSTRUCTIONS}
+                {
+                    "role" : "user"
+                    "content" : json.dumps(request_context)
+                },
+            ],
+            response_format = {
+                "type" : "json_schema",
+                "json_schema": {
+                    "name": "referral_fields",
+                    "strict": True,
+                    "schema": EXTRACTION_SCHEMA,
+                }
+            }
+        )
