@@ -102,7 +102,40 @@ class IntakeSessionTests(TestCase):
         self.assertEqual(session.status, ReferralSession.Status.COLLECTING)
         self.assertEqual(session.draft["needs"], ["food_delivery"])
         self.assertEqual(set(result["missing_fields"]), {"city", "county"})
-        self.assertIsNotNone(result["question"])
+        self.assertEqual(result["question"], "What city are you located in?")
+
+    def test_process_message_returns_county_follow_up_question(self):
+        session = ReferralSession.objects.create(
+            draft={
+                "needs": ["food_delivery"],
+                "city": "Stamford",
+            }
+        )
+
+        result = process_intake_message(
+            session,
+            "I still need help with meals delivered.",
+        )
+
+        self.assertEqual(result["missing_fields"], ["county"])
+        self.assertEqual(result["question"], "What county are you located in?")
+
+    def test_process_message_returns_healthcare_specialty_question(self):
+        session = ReferralSession.objects.create()
+
+        result = process_intake_message(
+            session,
+            "I need healthcare in Fairfield County.",
+        )
+
+        self.assertEqual(
+            result["missing_fields"],
+            ["healthcare_specialties"],
+        )
+        self.assertEqual(
+            result["question"],
+            "What type of healthcare specialty do you need?",
+        )
 
     def test_process_message_marks_complete_healthcare_intake_ready(self):
         session = ReferralSession.objects.create()
@@ -195,3 +228,14 @@ class SessionFinalizationTests(TestCase):
 
         with self.assertRaises(ValueError):
             finalize_session(session)
+
+    def test_correct_question(self):
+        session = ReferralSession.objects.create()
+
+        result = process_intake_message(
+            session,
+            "I need meals delivered.",
+        )
+
+        self.assertEqual(result["missing_fields"], ["city", "county"])
+        self.assertEqual(result["question"], "What city are you located in?")

@@ -74,4 +74,3 @@ class GroqExtractionTests(SimpleTestCase):
         with patch.dict("os.environ", {"GROQ_API_KEY": ""}, clear=False):
             with self.assertRaises(GroqExtractionError):
                 extract_fields_with_groq("I need meals delivered.")
-
