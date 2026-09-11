@@ -178,9 +178,34 @@ class RecommendationAPITests(APITestCase):
         self.assertFalse(new_haven_result["eligible"])
         self.assertEqual(new_haven_result["score"], 0)
 
-
-class IntakeAvailabilityAPITests(APITestCase):
+class IntakeAPITests(APITestCase):
     """Test the intake endpoint's behavior when the LLM provider is down."""
+
+    def test_creates_session(self):
+        response = self.client.post(
+            reverse("intake"),
+            {"message": "I need meals delivered."},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(ReferralSession.objects.count(), 1)
+
+        session = ReferralSession.objects.get()
+        self.assertEqual(response.data["session_id"], str(session.id))
+        self.assertEqual(
+            response.data["status"],
+            ReferralSession.Status.COLLECTING,
+        )
+        self.assertEqual(response.data["draft"]["needs"], ["food_delivery"])
+        self.assertEqual(
+            response.data["missing_fields"],
+            ["city", "county"],
+        )
+        self.assertEqual(
+            response.data["question"],
+            "What city are you located in?",
+        )
 
     @override_settings(EXTRACTION_BACKEND="groq")
     def test_unavailable_groq_returns_service_unavailable(self):
