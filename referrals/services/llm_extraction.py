@@ -90,6 +90,15 @@ transportation. Use lowercase canonical values for list fields and languages.
 If a value is not present, return null for scalar fields or an empty list for
 list fields.
 
+For healthcare specialties, map clear everyday descriptions to canonical
+specialties when the mapping is unambiguous. For example:
+
+- suspicious mole, skin lesion, rash, or acne → dermatology
+- cancer treatment or cancer follow-up → oncology
+- care specifically for older adults → geriatrics
+
+Do not infer a specialty when the description is too vague.
+
 The current draft and missing fields are context. They help interpret short
 follow-up answers such as a city name answering a pending city question.
 """.strip()
