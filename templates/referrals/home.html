@@ -1,0 +1,127 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Relay helps Stamford children and families find local support through a simple, private conversation.">
+    <title>Relay — Stamford children &amp; families</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'referrals/app.css' %}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="utility-bar">
+        <div>STAMFORD CHILDREN'S HEALTH COLLABORATIVE</div>
+        <div class="utility-links"><span>Community health resources</span><span>Fairfield County, CT</span></div>
+      </div>
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Relay home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M5 14.5C5 9.25 9.25 5 14.5 5c3.04 0 5.74 1.43 7.47 3.65" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M23 13.5C23 18.75 18.75 23 13.5 23a9.44 9.44 0 0 1-7.47-3.65" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="m19.4 5.3 2.9 3.35-4.1.85M8.6 22.7l-2.9-3.35 4.1-.85" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="brand-name">relay</span>
+          <span class="brand-context">for children &amp; families</span>
+        </a>
+        <div class="topbar-right">
+          <span class="privacy-note"><span class="lock-dot" aria-hidden="true">⌁</span> Private &amp; secure</span>
+          <button class="help-button" type="button" data-help-button>About Relay</button>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="intro-panel" aria-labelledby="page-title">
+          <div class="eyebrow"><span class="eyebrow-line"></span> Whole-child health starts here</div>
+          <h1 id="page-title">Support for your child,<br><em>close to home.</em></h1>
+          <p class="intro-copy">Relay helps families find local programs and services that support a child’s physical health, emotional well-being, nutrition, and everyday life.</p>
+
+          <div class="promise-list">
+            <div class="promise-item">
+              <span class="promise-icon mint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5 19 6v5.4c0 4.55-2.92 7.7-7 9.1-4.08-1.4-7-4.55-7-9.1V6l7-2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m8.7 12 2.15 2.15 4.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><strong>Nutrition &amp; healthy food</strong><small>Find practical support for healthy meals and food access.</small></span>
+            </div>
+            <div class="promise-item">
+              <span class="promise-icon peach" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5h16M4 12h16M4 16.5h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="16.5" r="2" fill="currentColor"/></svg></span>
+              <span><strong>Physical activity</strong><small>Connect with programs that make movement accessible.</small></span>
+            </div>
+            <div class="promise-item">
+              <span class="promise-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7.5 11.5c1.22 0 2.2-.98 2.2-2.2s-.98-2.2-2.2-2.2-2.2.98-2.2 2.2.98 2.2 2.2 2.2ZM16.5 11.5c1.22 0 2.2-.98 2.2-2.2s-.98-2.2-2.2-2.2-2.2.98-2.2 2.2.98 2.2 2.2 2.2Z" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18.3c.35-2.3 1.45-3.45 3-3.45s2.65 1.15 3 3.45M13.5 18.3c.35-2.3 1.45-3.45 3-3.45s2.65 1.15 3 3.45M10 13.4c.6.45 1.25.68 2 .68s1.4-.23 2-.68" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+              <span><strong>Social-emotional well-being</strong><small>Find caring support for feelings, behavior, and resilience.</small></span>
+            </div>
+          </div>
+
+          <div class="support-card">
+            <div class="support-avatars" aria-hidden="true"><span>✦</span><span>+</span><span>♥</span></div>
+            <div><strong>Community-powered care</strong><span>Connecting families with local support across Stamford.</span></div>
+          </div>
+        </section>
+
+        <section class="workspace" aria-label="Referral intake">
+          <div class="intake-card" data-intake-card>
+            <div class="intake-header">
+              <div>
+                <div class="section-kicker">Start a conversation</div>
+                <h2>How can we support your family?</h2>
+              </div>
+              <div class="step-pill"><span data-step-number>1</span><span class="step-divider">/</span><span>3</span></div>
+            </div>
+
+            <div class="progress-track" aria-hidden="true"><span data-progress></span></div>
+
+            <div class="conversation" data-conversation aria-live="polite">
+              <div class="message relay-message">
+                <span class="avatar relay-avatar" aria-hidden="true">r</span>
+                <div class="message-body"><span class="sender-label">Relay <span>• now</span></span><p>Hi there. I’m here to help you find local support. What do you need help with today?</p></div>
+              </div>
+              <div class="quick-prompts" data-quick-prompts>
+                <button type="button" data-prompt="I need help with food or nutrition for my child">Food & nutrition</button>
+                <button type="button" data-prompt="I need physical activity programs for my child">Physical activity</button>
+                <button type="button" data-prompt="I need support for my child's emotional well-being">Emotional well-being</button>
+                <button type="button" data-prompt="I need healthcare for my child">Healthcare</button>
+              </div>
+            </div>
+
+            <div class="intake-status" data-intake-status hidden></div>
+
+            <form class="composer" data-intake-form>
+              {% csrf_token %}
+              <label class="sr-only" for="intake-message">Tell Relay what you need</label>
+              <textarea id="intake-message" name="message" rows="2" placeholder="Share what’s on your mind…" autocomplete="off"></textarea>
+              <div class="composer-footer">
+                <span class="composer-hint"><span class="sparkle" aria-hidden="true">✦</span> You can type naturally</span>
+                <button class="send-button" type="submit"><span>Send</span><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              </div>
+            </form>
+            <button type="button" class="start-over" data-start-over hidden>Start a new referral</button>
+          </div>
+
+          <div class="results-panel" data-results-panel hidden>
+            <div class="results-header">
+              <div>
+                <div class="section-kicker">Your matches</div>
+                <h2>Support near you</h2>
+                <p data-results-summary>Based on what you shared.</p>
+              </div>
+              <button type="button" class="text-button" data-edit-referral>Edit referral</button>
+            </div>
+            <div class="results-list" data-results-list></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer"><span>Relay connects children and families with community resources.</span><span>For emergencies, call <strong>911</strong>.</span></footer>
+    </div>
+
+    <dialog class="help-dialog" data-help-dialog>
+      <button class="dialog-close" type="button" data-close-help aria-label="Close">×</button>
+      <div class="section-kicker">A little context</div>
+      <h2>How Relay works</h2>
+      <p>Relay helps families connect with community programs that support whole-child health: nutrition, physical activity, healthcare, and social-emotional well-being. Share what your family needs in your own words, and Relay will ask a few focused questions before showing local options.</p>
+      <p class="dialog-footnote">Relay is a community connection tool, not a substitute for emergency or medical care.</p>
+    </dialog>
+
+    <script src="{% static 'referrals/app.js' %}"></script>
+  </body>
+</html>

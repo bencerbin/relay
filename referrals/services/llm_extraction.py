@@ -44,6 +44,13 @@ EXTRACTION_SCHEMA = {
                     "healthcare",
                     "housing",
                     "transportation",
+                    "education",
+                    "physical_activity",
+                    "mental_health",
+                    "childcare",
+                    "parenting",
+                    "community_resources",
+                    "employment",
                 ],
             },
         },
@@ -85,8 +92,10 @@ You extract referral information from one user's message.
 
 Return only the fields in the supplied JSON schema.
 Extract only information the user stated or clearly answered. Do not guess.
-Use canonical need values: food, food_delivery, healthcare, housing, and
-transportation. Use lowercase canonical values for list fields and languages.
+Use canonical need values: food, food_delivery, healthcare, housing,
+transportation, education, physical_activity, mental_health, childcare,
+parenting, community_resources, and employment. Use lowercase canonical values
+for list fields and languages.
 If a value is not present, return null for scalar fields or an empty list for
 list fields.
 

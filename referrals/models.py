@@ -8,6 +8,13 @@ class ResourceCategory(models.TextChoices):
     HOUSING = "housing", "Housing"
     TRANSPORTATION = "transportation", "Transportation"
     HEALTHCARE = "healthcare", "Healthcare"
+    EDUCATION = "education", "Education"
+    PHYSICAL_ACTIVITY = "physical_activity", "Physical Activity"
+    MENTAL_HEALTH = "mental_health", "Mental Health"
+    CHILDCARE = "childcare", "Childcare"
+    PARENTING = "parenting", "Parenting"
+    COMMUNITY_RESOURCES = "community_resources", "Community Resources"
+    EMPLOYMENT = "employment", "Employment"
     
 class Language(models.TextChoices):
     ENGLISH = "english", "English"
@@ -63,7 +70,12 @@ class CommunityResource(models.Model):
     name = models.CharField(max_length = 255)
     city = models.CharField(max_length = 100)
     state = models.CharField(max_length = 100)
-    description = models.TextField(max_length = 100)
+    description = models.TextField()
+    logo = models.ImageField(
+        upload_to="resource_logos/",
+        blank=True,
+        null=True,
+    )
     
     counties_served = models.JSONField(default=list)
     cities_served = models.JSONField(default=list)

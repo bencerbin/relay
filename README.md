@@ -2,7 +2,7 @@
 
 Relay is an AI-assisted community referral platform that helps people find relevant local social services. Users describe what they need in natural language, and the backend collects the required information, converts it into structured referral data, and ranks matching community resources.
 
-The project is currently implemented as a Django REST Framework API. It supports conversational intake, optional LLM-powered field extraction through Groq, a deterministic keyword-based fallback for local development, and rule-based eligibility scoring across food, housing, healthcare, transportation, and food-delivery resources.
+The project is implemented as a Django app with a conversational web frontend and a Django REST Framework API. It supports conversational intake, optional LLM-powered field extraction through Groq, a deterministic keyword-based fallback for local development, and rule-based eligibility scoring across food, housing, healthcare, transportation, and food-delivery resources.
 
 ## Current capabilities
 
@@ -12,6 +12,9 @@ The project is currently implemented as a Django REST Framework API. It supports
 - Resource matching based on location, service type, age requirements, accessibility, language, insurance, specialty, population, modality, and program purpose.
 - Ranked recommendations with eligibility status, matching reasons, warnings, and source metadata.
 - Transaction-safe session finalization to prevent duplicate referral requests.
+- Responsive intake UI with quick prompts, progress feedback, and match cards.
+- Resource logos stored through Django's `ImageField` under `media/resource_logos/`.
+- Stamford Children’s Health Collaborative member resources seeded from the supplied reference document.
 
 ## Tech stack
 
@@ -39,7 +42,9 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-The API will be available at `http://127.0.0.1:8000/api/`.
+The web frontend will be available at `http://127.0.0.1:8000/` and the API at `http://127.0.0.1:8000/api/`.
+
+After applying migrations, local development serves uploaded resource logos from `/media/` when `DEBUG=True`.
 
 ## Configuration
 

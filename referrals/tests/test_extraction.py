@@ -24,6 +24,13 @@ class ExtractFieldsTests(SimpleTestCase):
         self.assertEqual(result["healthcare_specialties"], ["oncology"])
         self.assertEqual(result["county"], "New Haven")
 
+    def test_extracts_child_health_and_wellbeing_language(self):
+        result = extract_fields(
+            "I need nutrition and emotional well-being support for my child."
+        )
+
+        self.assertEqual(result["needs"], ["food", "mental_health"])
+
     def test_extracts_scalar_fields(self):
         result = extract_fields(
             "I am age 72, speak Spanish, have Medicaid, and use a wheelchair."

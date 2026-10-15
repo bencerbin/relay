@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
+from django.views.generic import TemplateView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ReferralSession
+from .models import CommunityResource, ReferralSession
 from .recommendation import recommend_resources
 from .serializers import IntakeMessageSerializer, ReferralRequestSerializer
 from .services.intake import (
@@ -25,17 +26,7 @@ class RecommendationView(APIView):
 
         response_data = {
             "referral": serializer.data,
-            "recommendations": [
-                {
-                    "resource_id": result.resource_id,
-                    "resource_name": result.resource_name,
-                    "eligible": result.eligible,
-                    "score": result.score,
-                    "reasons": result.reasons,
-                    "warnings": result.warnings,
-                }
-                for result in results
-            ],
+            "recommendations": _recommendation_payload(results),
         }
 
         return Response(
@@ -103,7 +94,7 @@ class SessionSearchView(APIView):
                 },
                 status=status.HTTP_409_CONFLICT,
             )
-            
+
         referral = finalize_session(session)
         results = recommend_resources(referral)
 
@@ -111,17 +102,44 @@ class SessionSearchView(APIView):
             {
                 "session_id": str(session.id),
                 "referral": ReferralRequestSerializer(referral).data,
-                "recommendations": [
-                    {
-                        "resource_id": result.resource_id,
-                        "resource_name": result.resource_name,
-                        "eligible": result.eligible,
-                        "score": result.score,
-                        "reasons": result.reasons,
-                        "warnings": result.warnings,
-                    }
-                    for result in results
-                ],
+                "recommendations": _recommendation_payload(results),
             },
             status=status.HTTP_200_OK,
         )
+
+
+def _recommendation_payload(results):
+    """Add the resource context needed by clients to present a referral."""
+    resources = CommunityResource.objects.in_bulk(
+        [result.resource_id for result in results]
+    )
+
+    return [
+        {
+            "resource_id": result.resource_id,
+            "resource_name": result.resource_name,
+            "eligible": result.eligible,
+            "score": result.score,
+            "reasons": result.reasons,
+            "warnings": result.warnings,
+            "description": resources[result.resource_id].description,
+            "logo_url": (
+                resources[result.resource_id].logo.url
+                if resources[result.resource_id].logo
+                else None
+            ),
+            "city": resources[result.resource_id].city,
+            "state": resources[result.resource_id].state,
+            "source_url": resources[result.resource_id].source_url,
+            "last_verified_at": (
+                resources[result.resource_id].last_verified_at.isoformat()
+                if resources[result.resource_id].last_verified_at
+                else None
+            ),
+        }
+        for result in results
+    ]
+
+
+class HomeView(TemplateView):
+    template_name = "referrals/home.html"

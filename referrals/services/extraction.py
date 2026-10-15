@@ -16,6 +16,16 @@ NEED_PHRASES = {
         "food pantry",
         "food assistance",
         "groceries",
+        "nutrition",
+        "healthy food",
+    ),
+    "mental_health": (
+        "emotional support",
+        "emotional well-being",
+        "mental health",
+        "behavioral health",
+        "counseling",
+        "grief support",
     ),
     "healthcare": (
         "healthcare",
@@ -32,6 +42,41 @@ NEED_PHRASES = {
         "transportation",
         "a ride",
         "rides",
+    ),
+    "education": (
+        "education",
+        "educational program",
+        "school support",
+        "tutoring",
+        "literacy",
+    ),
+    "physical_activity": (
+        "physical activity",
+        "sports program",
+        "sports league",
+        "fitness",
+        "exercise",
+    ),
+    "childcare": (
+        "childcare",
+        "child care",
+        "daycare",
+        "preschool",
+        "after-school",
+    ),
+    "parenting": (
+        "parenting support",
+        "parent education",
+    ),
+    "community_resources": (
+        "community resources",
+        "community program",
+        "local resources",
+    ),
+    "employment": (
+        "employment",
+        "job training",
+        "career support",
     ),
 }
 
