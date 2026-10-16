@@ -4,26 +4,24 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Relay helps Stamford children and families find local support through a simple, private conversation.">
-    <title>Relay — Stamford children &amp; families</title>
+    <meta name="description" content="The Stamford Children's Health Collaborative community resource directory, powered by Relay.">
+    <title>Stamford Children's Health Collaborative | Relay</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'referrals/app.css' %}">
+    <link rel="stylesheet" href="{% static 'referrals/app.css' %}?v=20261015-5">
   </head>
   <body>
     <div class="app-shell">
-      <div class="utility-bar">
-        <div>STAMFORD CHILDREN'S HEALTH COLLABORATIVE</div>
-        <div class="utility-links"><span>Community health resources</span><span>Fairfield County, CT</span></div>
-      </div>
       <header class="topbar">
         <a class="brand" href="/" aria-label="Relay home">
+          <span class="brand-org"><strong>Stamford Children's Health Collaborative</strong><small>Community resource directory</small></span>
+          <span class="brand-divider" aria-hidden="true">×</span>
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 28 28" fill="none"><path d="M5 14.5C5 9.25 9.25 5 14.5 5c3.04 0 5.74 1.43 7.47 3.65" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M23 13.5C23 18.75 18.75 23 13.5 23a9.44 9.44 0 0 1-7.47-3.65" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="m19.4 5.3 2.9 3.35-4.1.85M8.6 22.7l-2.9-3.35 4.1-.85" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
           <span class="brand-name">relay</span>
-          <span class="brand-context">for children &amp; families</span>
+          <span class="brand-context">powered by Relay</span>
         </a>
         <div class="topbar-right">
           <span class="privacy-note"><span class="lock-dot" aria-hidden="true">⌁</span> Private &amp; secure</span>
@@ -33,9 +31,9 @@
 
       <main class="main-content">
         <section class="intro-panel" aria-labelledby="page-title">
-          <div class="eyebrow"><span class="eyebrow-line"></span> Whole-child health starts here</div>
-          <h1 id="page-title">Support for your child,<br><em>close to home.</em></h1>
-          <p class="intro-copy">Relay helps families find local programs and services that support a child’s physical health, emotional well-being, nutrition, and everyday life.</p>
+          <div class="eyebrow"><span class="eyebrow-line"></span> Stamford Children's Health Collaborative</div>
+          <h1 id="page-title">Whole-child support,<br><em>close to home.</em></h1>
+          <p class="intro-copy">The Collaborative brings together local organizations that support children and families. Relay is your simple, private way to find the right program or service for your family.</p>
 
           <div class="promise-list">
             <div class="promise-item">
@@ -54,7 +52,7 @@
 
           <div class="support-card">
             <div class="support-avatars" aria-hidden="true"><span>✦</span><span>+</span><span>♥</span></div>
-            <div><strong>Community-powered care</strong><span>Connecting families with local support across Stamford.</span></div>
+            <div><strong>Built for Stamford families</strong><span>A shared front door to the Collaborative's member programs and services.</span></div>
           </div>
         </section>
 
@@ -63,7 +61,7 @@
             <div class="intake-header">
               <div>
                 <div class="section-kicker">Start a conversation</div>
-                <h2>How can we support your family?</h2>
+                <h2>Find support through the Collaborative</h2>
               </div>
               <div class="step-pill"><span data-step-number>1</span><span class="step-divider">/</span><span>3</span></div>
             </div>
@@ -111,17 +109,63 @@
         </section>
       </main>
 
-      <footer class="footer"><span>Relay connects children and families with community resources.</span><span>For emergencies, call <strong>911</strong>.</span></footer>
+      <section class="directory-section" aria-labelledby="directory-title">
+        <div class="directory-header">
+          <div>
+            <div class="section-kicker">Stamford Children’s Health Collaborative</div>
+            <h2 id="directory-title">Meet our member organizations</h2>
+            <p>Explore the Collaborative’s member organizations and the programs they offer to children and families across Stamford and Fairfield County.</p>
+          </div>
+          <label class="directory-search">
+            <span class="sr-only">Filter members</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="search" data-member-filter placeholder="Search members or services" autocomplete="off">
+          </label>
+        </div>
+        <div class="directory-meta">
+          <span data-member-count>{{ members|length }} members</span>
+          <span>Scroll to browse the full directory</span>
+        </div>
+        <div class="member-directory" data-member-directory>
+          {% for member in members %}
+            <article class="member-card" data-member-card data-member-search="{{ member.name|lower }} {{ member.description|lower }}">
+              <div class="member-card-heading">
+                <div class="member-logo-wrap">
+                  {% if member.logo %}
+                    <img src="{{ member.logo.url }}" alt="{{ member.name }} logo" loading="lazy">
+                  {% else %}
+                    <span aria-hidden="true">{{ member.name|slice:":1" }}</span>
+                  {% endif %}
+                </div>
+                <div>
+                  <h3>{{ member.name }}</h3>
+                  <div class="member-location">Stamford, CT <span>•</span> Fairfield County</div>
+                </div>
+              </div>
+              <p>{{ member.description }}</p>
+              <div class="member-card-footer">
+                <span>Collaborative member</span>
+                {% if member.source_url %}<a href="{{ member.source_url }}" target="_blank" rel="noopener">Visit resource ↗</a>{% endif %}
+              </div>
+            </article>
+          {% empty %}
+            <p class="directory-empty">No members are available yet.</p>
+          {% endfor %}
+        </div>
+        <p class="directory-empty" data-member-empty hidden>No members match that search. Try a different name or service.</p>
+      </section>
+
+      <footer class="footer"><span>Stamford Children's Health Collaborative community resource directory · Powered by Relay</span><span>For emergencies, call <strong>911</strong>.</span></footer>
     </div>
 
     <dialog class="help-dialog" data-help-dialog>
       <button class="dialog-close" type="button" data-close-help aria-label="Close">×</button>
       <div class="section-kicker">A little context</div>
       <h2>How Relay works</h2>
-      <p>Relay helps families connect with community programs that support whole-child health: nutrition, physical activity, healthcare, and social-emotional well-being. Share what your family needs in your own words, and Relay will ask a few focused questions before showing local options.</p>
+      <p>The Stamford Children’s Health Collaborative brings together community partners working toward better health for children and families. Relay gives families a simple way to describe what they need and discover relevant member programs and services.</p>
       <p class="dialog-footnote">Relay is a community connection tool, not a substitute for emergency or medical care.</p>
     </dialog>
 
-    <script src="{% static 'referrals/app.js' %}"></script>
+    <script src="{% static 'referrals/app.js' %}?v=20261016-1"></script>
   </body>
 </html>

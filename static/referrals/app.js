@@ -17,6 +17,10 @@
   const helpDialog = document.querySelector("[data-help-dialog]");
   const helpButton = document.querySelector("[data-help-button]");
   const closeHelp = document.querySelector("[data-close-help]");
+  const memberFilter = document.querySelector("[data-member-filter]");
+  const memberCards = [...document.querySelectorAll("[data-member-card]")];
+  const memberCount = document.querySelector("[data-member-count]");
+  const memberEmpty = document.querySelector("[data-member-empty]");
 
   let sessionId = null;
   let isReady = false;
@@ -66,7 +70,7 @@
 
   function setLoading(loading) {
     sendButton.disabled = loading;
-    sendButton.querySelector("span").textContent = loading ? "Thinking…" : (isReady ? "Show my matches" : "Send");
+    sendButton.querySelector("span").textContent = loading ? "Thinking…" : (isReady ? "Quick search" : "Send");
   }
 
   function formatNeed(need) {
@@ -105,12 +109,19 @@
 
   function showReadyState(data) {
     isReady = true;
-    appendMessage("relay", "I have enough to start looking. Ready to see the local resources that fit your needs?");
+    appendMessage("relay", "Before I search, is there anything else you’d like me to consider—such as your child’s age, insurance, preferred language, or accessibility needs?");
     updateProgress([], "ready");
-    sendButton.querySelector("span").textContent = "Show my matches";
-    form.querySelector("textarea").placeholder = "Add anything else, or show my matches…";
+    sendButton.querySelector("span").textContent = "Quick search";
+    form.querySelector("textarea").placeholder = "Answer Relay, or start a quick search…";
     startOver.hidden = false;
     resultsSummary.textContent = summarizeDraft(data.draft) || "Based on what you shared.";
+  }
+
+  function acknowledgeReadyFollowup(data) {
+    isReady = true;
+    updateProgress([], "ready");
+    resultsSummary.textContent = summarizeDraft(data.draft) || "Based on what you shared.";
+    appendMessage("relay", "Thanks—I’ll include that. Would you like to add anything else, or run a quick search?");
   }
 
   function renderResults(data) {
@@ -164,6 +175,22 @@
     return new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" }).format(new Date(value));
   }
 
+  function updateMemberDirectory() {
+    if (!memberFilter || !memberCount) return;
+
+    const query = memberFilter.value.trim().toLowerCase();
+    let visibleCount = 0;
+
+    memberCards.forEach((card) => {
+      const matches = !query || card.dataset.memberSearch.includes(query);
+      card.hidden = !matches;
+      if (matches) visibleCount += 1;
+    });
+
+    memberCount.textContent = `${visibleCount} member${visibleCount === 1 ? "" : "s"}`;
+    if (memberEmpty) memberEmpty.hidden = visibleCount !== 0;
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const message = textarea.value.trim();
@@ -190,8 +217,16 @@
     setStatus("");
     try {
       if (isReady) {
-        const data = await searchSession();
-        renderResults(data);
+        const data = await sendIntake(message);
+        sessionId = data.session_id;
+        updateProgress(data.missing_fields || [], data.status);
+        if (data.status === "ready") {
+          acknowledgeReadyFollowup(data);
+        } else {
+          isReady = false;
+          appendMessage("relay", data.question || "What else would help us narrow this down?");
+          setStatus(data.draft && summarizeDraft(data.draft) ? `So far: ${summarizeDraft(data.draft)}` : "");
+        }
       } else {
         const data = await sendIntake(message);
         sessionId = data.session_id;
@@ -218,6 +253,8 @@
       textarea.focus();
     });
   });
+
+  if (memberFilter) memberFilter.addEventListener("input", updateMemberDirectory);
 
   startOver.addEventListener("click", () => window.location.reload());
   editReferral.addEventListener("click", () => {

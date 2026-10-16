@@ -7,9 +7,9 @@ The project is implemented as a Django app with a conversational web frontend an
 ## Current capabilities
 
 - Conversational referral intake with persistent sessions.
-- Structured extraction of needs, county, city, language, insurance, age, accessibility requirements, healthcare specialties, service modalities, and program purpose.
+- Structured extraction of broad needs plus specific subneeds/tags, county, city, language, insurance, age, accessibility requirements, healthcare specialties, service modalities, and program purpose.
 - Context-aware follow-up questions when required information is missing.
-- Resource matching based on location, service type, age requirements, accessibility, language, insurance, specialty, population, modality, and program purpose.
+- Resource matching based on exact subneeds first, then broad service type, location, age requirements, accessibility, language, insurance, specialty, population, modality, and program purpose.
 - Ranked recommendations with eligibility status, matching reasons, warnings, and source metadata.
 - Transaction-safe session finalization to prevent duplicate referral requests.
 - Responsive intake UI with quick prompts, progress feedback, and match cards.
@@ -97,7 +97,7 @@ The main entities are:
 
 - `ReferralSession`: stores the conversational draft and tracks intake status.
 - `ReferralRequest`: stores the finalized referral criteria.
-- `CommunityResource`: stores service descriptions, geographic coverage, eligibility information, supported languages, source URLs, and verification metadata.
+- `CommunityResource`: stores service descriptions, broad needs, specific subneeds/tags, geographic coverage, eligibility information, supported languages, source URLs, and verification metadata.
 
 ## Roadmap: Retrieval-Augmented Generation
 

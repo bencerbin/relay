@@ -6,7 +6,12 @@ from django.db import transaction
 from ..models import ReferralRequest, ReferralSession
 from ..serializers import ReferralRequestSerializer
 
-from .extraction import extract_fields
+from .extraction import (
+    detect_ambiguous_intent,
+    extract_fields,
+    resolve_clarification_answer,
+)
+from .constants import SERVICE_AREA_COUNTY
 
 Draft = dict[str, Any]
 
@@ -19,6 +24,7 @@ REQUEST_FIELDS = frozenset(
         "insurance_type",
         "wheelchair",
         "needs",
+        "subneeds",
         "healthcare_specialties",
         "population_context",
         "service_modalities",
@@ -29,6 +35,7 @@ REQUEST_FIELDS = frozenset(
 LIST_FIELDS = frozenset(
     {
         "needs",
+        "subneeds",
         "healthcare_specialties",
         "population_context",
         "service_modalities",
@@ -48,11 +55,54 @@ CONTEXT_REQUIRED_FIELDS = {
 }
 
 FIELD_QUESTIONS = {
-    "needs": "What kind of help are you looking for?",
-    "county": "What county are you located in?",
+    "needs": (
+        "I can’t quite find a resource category for that yet. Do you mean "
+        "you need help with food and nutrition, physical activity, "
+        "emotional well-being, or healthcare?"
+    ),
+    "county": f"Are you located in {SERVICE_AREA_COUNTY} County?",
     "city": "What city are you located in?",
     "healthcare_specialties": "What type of healthcare specialty do you need?",
 }
+
+CLARIFICATION_CONFIRMATION_FIELDS = {
+    "food": {"needs": ["food"]},
+    "food_assistance": {
+        "needs": ["food"],
+        "subneeds": ["food_assistance"],
+    },
+    "mental_health": {"needs": ["mental_health"]},
+    "mental_health_counseling": {
+        "needs": ["mental_health"],
+        "subneeds": ["mental_health_counseling"],
+    },
+    "physical_activity": {"needs": ["physical_activity"]},
+    "healthcare": {"needs": ["healthcare"]},
+    "housing": {"needs": ["housing"]},
+    "transportation": {"needs": ["transportation"]},
+    "education": {"needs": ["education"]},
+    "childcare": {"needs": ["childcare"]},
+    "parenting": {"needs": ["parenting"]},
+    "employment": {"needs": ["employment"]},
+}
+
+
+def _normalize_clarification(value: Any) -> dict[str, str]:
+    """Accept only a concise, usable clarification from the extractor."""
+    if not isinstance(value, Mapping):
+        return {}
+
+    kind = value.get("kind")
+    question = value.get("question")
+    if not isinstance(kind, str) or not kind.strip():
+        return {}
+    if not isinstance(question, str) or not question.strip():
+        return {}
+
+    return {
+        "kind": kind.strip().lower(),
+        "question": question.strip(),
+    }
 
 
 
@@ -198,7 +248,20 @@ def get_required_fields(draft: Mapping[str, Any]) -> list[str]:
     """Return the complete requirement set for the current draft."""
     required_fields = set(STATIC_REQUIRED_FIELDS)
     required_fields.update(get_contextual_required_fields(draft))
-    return sorted(required_fields)
+    preferred_order = (
+        "needs",
+        "healthcare_specialties",
+        "city",
+        "county",
+    )
+    ordered_fields = [
+        field_name
+        for field_name in preferred_order
+        if field_name in required_fields
+    ]
+    return ordered_fields + sorted(
+        required_fields.difference(preferred_order),
+    )
 
 
 def _is_missing(draft: Mapping[str, Any], field_name: str) -> bool:
@@ -260,11 +323,66 @@ def process_intake_message(
             "referral_request_id": session_snapshot.referral_request_id,
         }
 
+    previous_missing_fields = get_missing_required_fields(
+        session_snapshot.draft,
+    )
+    pending_clarification = dict(
+        session_snapshot.pending_clarification or {}
+    )
+    clarification_answer = (
+        resolve_clarification_answer(
+            message,
+            pending_clarification,
+        )
+        if pending_clarification
+        else None
+    )
+    extraction_missing_fields = previous_missing_fields
+    if (
+        pending_clarification
+        and clarification_answer in {"yes", "no"}
+    ):
+        # Do not interpret the confirmation as a response to a later county
+        # question in the same turn. Location is intentionally collected last.
+        extraction_missing_fields = [
+            field_name
+            for field_name in previous_missing_fields
+            if field_name not in {"county", "city"}
+        ]
     extracted_data = extract_fields(
         message,
         current_draft=session_snapshot.draft,
-        missing_fields=get_missing_required_fields(session_snapshot.draft),
+        missing_fields=extraction_missing_fields,
     )
+    extractor_clarification = _normalize_clarification(
+        extracted_data.pop("clarification", None)
+    )
+
+    if pending_clarification:
+        if extracted_data.get("needs"):
+            pending_clarification = {}
+        elif clarification_answer == "yes":
+            confirmation_fields = CLARIFICATION_CONFIRMATION_FIELDS.get(
+                pending_clarification.get("kind"),
+            )
+            if confirmation_fields:
+                extracted_data = merge_extracted_data(
+                    extracted_data,
+                    confirmation_fields,
+                )
+                pending_clarification = {}
+        elif clarification_answer == "no":
+            pending_clarification = {}
+
+    if (
+        not extracted_data.get("needs")
+        and not pending_clarification
+    ):
+        pending_clarification = (
+            extractor_clarification
+            or detect_ambiguous_intent(message)
+            or {}
+        )
 
     with transaction.atomic():
         locked_session = (
@@ -293,18 +411,30 @@ def process_intake_message(
         missing_fields = get_missing_required_fields(updated_draft)
 
         locked_session.draft = updated_draft
+        locked_session.pending_clarification = pending_clarification
         locked_session.status = (
             ReferralSession.Status.COLLECTING
             if missing_fields
             else ReferralSession.Status.READY
         )
-        locked_session.save(update_fields=["draft", "status", "updated_at"])
-
-        next_question = (
-            FIELD_QUESTIONS.get(missing_fields[0])
-            if missing_fields
-            else None
+        locked_session.save(
+            update_fields=[
+                "draft",
+                "pending_clarification",
+                "status",
+                "updated_at",
+            ]
         )
+
+        next_question = None
+        if missing_fields:
+            if (
+                pending_clarification
+                and "needs" in missing_fields
+            ):
+                next_question = pending_clarification["question"]
+            else:
+                next_question = FIELD_QUESTIONS.get(missing_fields[0])
 
         return {
             "session_id": str(locked_session.id),

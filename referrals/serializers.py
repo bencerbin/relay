@@ -34,6 +34,7 @@ class ReferralRequestSerializer(serializers.ModelSerializer):
             "insurance_type",
             "wheelchair",
             "needs",
+            "subneeds",
             "healthcare_specialties",
             "population_context",
             "service_modalities",

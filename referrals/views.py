@@ -143,3 +143,10 @@ def _recommendation_payload(results):
 
 class HomeView(TemplateView):
     template_name = "referrals/home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["members"] = CommunityResource.objects.filter(
+            active=True,
+        ).order_by("name")
+        return context

@@ -70,7 +70,7 @@ class IntakeHelperTests(SimpleTestCase):
     def test_required_fields_include_static_and_contextual_requirements(self):
         self.assertEqual(
             get_required_fields({"needs": ["healthcare"]}),
-            ["county", "healthcare_specialties", "needs"],
+            ["needs", "healthcare_specialties", "county"],
         )
 
     def test_missing_fields_are_recalculated_from_the_current_draft(self):
@@ -104,6 +104,21 @@ class IntakeSessionTests(TestCase):
         self.assertEqual(set(result["missing_fields"]), {"city", "county"})
         self.assertEqual(result["question"], "What city are you located in?")
 
+    def test_unknown_need_uses_category_disambiguation_question(self):
+        session = ReferralSession.objects.create()
+
+        result = process_intake_message(
+            session,
+            "I need something that can help me feel more prepared.",
+        )
+
+        self.assertEqual(
+            result["question"],
+            "I can’t quite find a resource category for that yet. Do you "
+            "mean you need help with food and nutrition, physical activity, "
+            "emotional well-being, or healthcare?",
+        )
+
     def test_process_message_returns_county_follow_up_question(self):
         session = ReferralSession.objects.create(
             draft={
@@ -118,7 +133,68 @@ class IntakeSessionTests(TestCase):
         )
 
         self.assertEqual(result["missing_fields"], ["county"])
-        self.assertEqual(result["question"], "What county are you located in?")
+        self.assertEqual(
+            result["question"],
+            "Are you located in Fairfield County?",
+        )
+
+    def test_ambiguous_food_hardship_gets_confirmation_before_location(self):
+        session = ReferralSession.objects.create()
+
+        first_result = process_intake_message(
+            session,
+            "I have some dumplings on the stove but I need more dumplings "
+            "yet I'm broke so I can't afford them.",
+        )
+        second_result = process_intake_message(session, "Yes")
+
+        self.assertEqual(
+            first_result["question"],
+            "Do you mean you want food-based assistance?",
+        )
+        self.assertEqual(
+            second_result["question"],
+            "Are you located in Fairfield County?",
+        )
+        self.assertEqual(second_result["missing_fields"], ["county"])
+
+        third_result = process_intake_message(session, "Yes")
+
+        self.assertEqual(third_result["status"], ReferralSession.Status.READY)
+        self.assertEqual(third_result["draft"]["needs"], ["food"])
+        self.assertEqual(
+            third_result["draft"]["subneeds"],
+            ["food_assistance"],
+        )
+
+    def test_clear_food_answer_skips_ambiguous_confirmation(self):
+        session = ReferralSession.objects.create()
+
+        result = process_intake_message(
+            session,
+            "I need food in Fairfield County.",
+        )
+
+        self.assertEqual(result["status"], ReferralSession.Status.READY)
+        self.assertIsNone(result["question"])
+        self.assertEqual(result["draft"]["needs"], ["food"])
+
+    def test_rough_time_language_collects_mental_health_referral(self):
+        session = ReferralSession.objects.create()
+
+        first_result = process_intake_message(
+            session,
+            "My son is having a rough time and I want him to talk to somebody.",
+        )
+        second_result = process_intake_message(session, "Yes")
+
+        self.assertEqual(first_result["missing_fields"], ["county"])
+        self.assertEqual(second_result["status"], ReferralSession.Status.READY)
+        self.assertEqual(second_result["draft"]["needs"], ["mental_health"])
+        self.assertEqual(
+            second_result["draft"]["subneeds"],
+            ["mental_health_counseling"],
+        )
 
     def test_process_message_returns_healthcare_specialty_question(self):
         session = ReferralSession.objects.create()
@@ -137,6 +213,42 @@ class IntakeSessionTests(TestCase):
             "What type of healthcare specialty do you need?",
         )
 
+    def test_sports_injury_infers_healthcare_and_asks_location_last(self):
+        session = ReferralSession.objects.create()
+
+        result = process_intake_message(
+            session,
+            "I suffered a high ankle sprain in a football game.",
+        )
+
+        self.assertEqual(result["missing_fields"], ["county"])
+        self.assertEqual(
+            result["question"],
+            "Are you located in Fairfield County?",
+        )
+        self.assertEqual(result["draft"]["needs"], ["healthcare"])
+        self.assertEqual(
+            result["draft"]["healthcare_specialties"],
+            ["orthopedics"],
+        )
+
+    def test_short_healthcare_specialty_answer_is_not_reasked(self):
+        session = ReferralSession.objects.create(
+            draft={
+                "needs": ["healthcare"],
+                "county": "Fairfield",
+            }
+        )
+
+        result = process_intake_message(session, "dental care")
+
+        self.assertEqual(result["status"], ReferralSession.Status.READY)
+        self.assertEqual(result["missing_fields"], [])
+        self.assertEqual(
+            result["draft"]["healthcare_specialties"],
+            ["dentistry"],
+        )
+
     def test_process_message_marks_complete_healthcare_intake_ready(self):
         session = ReferralSession.objects.create()
 
@@ -150,6 +262,24 @@ class IntakeSessionTests(TestCase):
         self.assertEqual(result["missing_fields"], [])
         self.assertIsNone(result["question"])
         self.assertEqual(session.draft["healthcare_specialties"], ["oncology"])
+
+    def test_everyday_healthcare_description_accepts_short_county_answer(self):
+        session = ReferralSession.objects.create()
+
+        first_result = process_intake_message(
+            session,
+            "I need help with a suspicious mole",
+        )
+        second_result = process_intake_message(session, "Fairfield")
+
+        self.assertEqual(first_result["missing_fields"], ["county"])
+        self.assertEqual(second_result["status"], ReferralSession.Status.READY)
+        self.assertEqual(second_result["missing_fields"], [])
+        self.assertEqual(second_result["draft"]["county"], "Fairfield")
+        self.assertEqual(
+            second_result["draft"]["healthcare_specialties"],
+            ["dermatology"],
+        )
 
     def test_multiple_messages_accumulate_information(self):
         session = ReferralSession.objects.create()

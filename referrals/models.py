@@ -30,6 +30,7 @@ class ReferralRequest(models.Model):
     insurance_type = models.CharField(max_length = 100, blank= True)
     wheelchair = models.BooleanField(default=False)
     needs = models.JSONField(default=list)
+    subneeds = models.JSONField(default=list)
     healthcare_specialties = models.JSONField(default=list)
     population_context = models.JSONField(default=list)
     service_modalities = models.JSONField(default=list)
@@ -51,6 +52,7 @@ class ReferralSession(models.Model):
         editable=False,
     )
     draft = models.JSONField(default=dict)
+    pending_clarification = models.JSONField(default=dict, blank=True)
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -80,6 +82,7 @@ class CommunityResource(models.Model):
     counties_served = models.JSONField(default=list)
     cities_served = models.JSONField(default=list)
     needs_addressed = models.JSONField(default=list)
+    subneeds = models.JSONField(default=list)
     
     healthcare_specialties = models.JSONField(default=list)
     population_served = models.JSONField(default=list)

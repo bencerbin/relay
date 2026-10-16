@@ -43,6 +43,31 @@ def evaluate_resource(
     else:
         failures.append("Does not provide a requested service.")
 
+    requested_subneeds = {
+        normalize(item) for item in referral.subneeds
+    }
+    available_subneeds = {
+        normalize(item) for item in resource.subneeds
+    }
+
+    if requested_subneeds:
+        matching_subneeds = requested_subneeds & available_subneeds
+        if matching_subneeds:
+            matched_subneed_score = round(
+                35 * len(matching_subneeds) / len(requested_subneeds)
+            )
+            score += matched_subneed_score
+            reasons.append(
+                "Matches specific request: "
+                f"{', '.join(sorted(matching_subneeds))}."
+            )
+        elif available_subneeds:
+            warnings.append(
+                "Does not list the requested specific service."
+            )
+        else:
+            warnings.append("Specific services are not documented.")
+
     requested_specialties = {
         normalize(item) for item in referral.healthcare_specialties
     }
@@ -196,7 +221,7 @@ def evaluate_resource(
         eligible=len(failures) == 0,
         reasons=reasons + failures,
         warnings=warnings,
-        score=score if not failures else 0,
+        score=min(score, 100) if not failures else 0,
     )
 
 
