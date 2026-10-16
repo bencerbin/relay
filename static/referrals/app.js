@@ -109,7 +109,7 @@
 
   function showReadyState(data) {
     isReady = true;
-    appendMessage("relay", "Before I search, is there anything else you’d like me to consider—such as your child’s age, insurance, preferred language, or accessibility needs?");
+    appendMessage("relay", data.question || "Before I search, is there anything else you’d like me to consider—such as your child’s age, insurance, preferred language, or accessibility needs?");
     updateProgress([], "ready");
     sendButton.querySelector("span").textContent = "Quick search";
     form.querySelector("textarea").placeholder = "Answer Relay, or start a quick search…";
@@ -121,7 +121,7 @@
     isReady = true;
     updateProgress([], "ready");
     resultsSummary.textContent = summarizeDraft(data.draft) || "Based on what you shared.";
-    appendMessage("relay", "Thanks—I’ll include that. Would you like to add anything else, or run a quick search?");
+    appendMessage("relay", data.question || "Thanks—I’ll include that. Would you like to add anything else, or run a quick search?");
   }
 
   function renderResults(data) {

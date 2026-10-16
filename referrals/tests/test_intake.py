@@ -1,4 +1,6 @@
-from django.test import SimpleTestCase, TestCase
+from unittest.mock import patch
+
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from referrals.models import ReferralRequest, ReferralSession
 from referrals.services.intake import (
@@ -117,6 +119,31 @@ class IntakeSessionTests(TestCase):
             "I can’t quite find a resource category for that yet. Do you "
             "mean you need help with food and nutrition, physical activity, "
             "emotional well-being, or healthcare?",
+        )
+
+    @override_settings(EXTRACTION_BACKEND="groq")
+    @patch("referrals.services.intake.extract_fields")
+    def test_llm_follow_up_question_is_used_when_ready(self, extract_fields):
+        extract_fields.return_value = {
+            "needs": ["mental_health"],
+            "county": "Fairfield",
+            "follow_up_question": (
+                "Would counseling or school-based emotional support be more "
+                "helpful?"
+            ),
+        }
+        session = ReferralSession.objects.create()
+
+        result = process_intake_message(
+            session,
+            "My son is having a hard time in school.",
+        )
+
+        self.assertEqual(result["status"], ReferralSession.Status.READY)
+        self.assertEqual(
+            result["question"],
+            "Would counseling or school-based emotional support be more "
+            "helpful?",
         )
 
     def test_process_message_returns_county_follow_up_question(self):

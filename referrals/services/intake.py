@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 
 from ..models import ReferralRequest, ReferralSession
@@ -103,6 +104,13 @@ def _normalize_clarification(value: Any) -> dict[str, str]:
         "kind": kind.strip().lower(),
         "question": question.strip(),
     }
+
+
+def _normalize_follow_up_question(value: Any) -> str | None:
+    """Accept one concise optional question from the LLM planner."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return value.strip()
 
 
 
@@ -250,9 +258,9 @@ def get_required_fields(draft: Mapping[str, Any]) -> list[str]:
     required_fields.update(get_contextual_required_fields(draft))
     preferred_order = (
         "needs",
+        "county",
         "healthcare_specialties",
         "city",
-        "county",
     )
     ordered_fields = [
         field_name
@@ -343,7 +351,8 @@ def process_intake_message(
         and clarification_answer in {"yes", "no"}
     ):
         # Do not interpret the confirmation as a response to a later county
-        # question in the same turn. Location is intentionally collected last.
+        # question in the same turn. County is collected immediately after
+        # the need because it gates whether searching is possible.
         extraction_missing_fields = [
             field_name
             for field_name in previous_missing_fields
@@ -356,6 +365,9 @@ def process_intake_message(
     )
     extractor_clarification = _normalize_clarification(
         extracted_data.pop("clarification", None)
+    )
+    extractor_follow_up_question = _normalize_follow_up_question(
+        extracted_data.pop("follow_up_question", None)
     )
 
     if pending_clarification:
@@ -433,8 +445,18 @@ def process_intake_message(
                 and "needs" in missing_fields
             ):
                 next_question = pending_clarification["question"]
+            elif (
+                settings.EXTRACTION_BACKEND.lower() == "groq"
+                and extractor_follow_up_question
+            ):
+                next_question = extractor_follow_up_question
             else:
                 next_question = FIELD_QUESTIONS.get(missing_fields[0])
+        elif (
+            settings.EXTRACTION_BACKEND.lower() == "groq"
+            and extractor_follow_up_question
+        ):
+            next_question = extractor_follow_up_question
 
         return {
             "session_id": str(locked_session.id),

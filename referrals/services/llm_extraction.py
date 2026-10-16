@@ -126,6 +126,12 @@ EXTRACTION_SCHEMA = {
                 {"type": "null"},
             ]
         },
+        "follow_up_question": {
+            "anyOf": [
+                {"type": "string"},
+                {"type": "null"},
+            ]
+        },
     },
     "required": [
         "age",
@@ -141,6 +147,7 @@ EXTRACTION_SCHEMA = {
         "service_modalities",
         "program_purposes",
         "clarification",
+        "follow_up_question",
     ],
     "additionalProperties": False,
 }
@@ -182,6 +189,15 @@ food without explicitly asking for food assistance, return a question such as
 "Do you mean you want food-based assistance?". Return null when the user's
 need is clear. Never use a generic question such as "What kind of help are you
 looking for?" when a more specific confirmation is possible.
+
+Return at most one follow_up_question. Use the current draft, missing fields,
+and the user's latest message to choose the most useful next question. Ask
+about urgent or potentially time-sensitive needs first, then the requested
+service or its important details, then eligibility details such as age,
+insurance, language, or accessibility. Ask for location last. If the user's
+need is already clear and there is no useful optional question, return null.
+For an acute injury, ask whether they need urgent medical care when that is
+the most important unresolved issue; do not diagnose or give medical advice.
 
 For healthcare specialties, map clear everyday descriptions to canonical
 specialties when the mapping is unambiguous. For example:
