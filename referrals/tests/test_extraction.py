@@ -74,6 +74,12 @@ class ExtractFieldsTests(SimpleTestCase):
         self.assertEqual(result["needs"], ["physical_activity"])
         self.assertEqual(result["subneeds"], ["physical_fitness"])
 
+    def test_infers_employment_and_career_support(self):
+        result = extract_fields("I need help finding a job.")
+
+        self.assertEqual(result["needs"], ["employment"])
+        self.assertEqual(result["subneeds"], ["career_support"])
+
     def test_infers_mental_health_support_from_everyday_language(self):
         result = extract_fields(
             "My son has been having a rough time in school and needs to talk "

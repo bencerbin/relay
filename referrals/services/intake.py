@@ -78,6 +78,11 @@ CLARIFICATION_CONFIRMATION_FIELDS = {
         "subneeds": ["mental_health_counseling"],
     },
     "physical_activity": {"needs": ["physical_activity"]},
+    "outdoor_activity": {"needs": ["physical_activity"]},
+    "outdoor_recreation": {"needs": ["physical_activity"]},
+    "recreational_activity": {"needs": ["physical_activity"]},
+    "recreation": {"needs": ["physical_activity"]},
+    "parks": {"needs": ["physical_activity"]},
     "healthcare": {"needs": ["healthcare"]},
     "housing": {"needs": ["housing"]},
     "transportation": {"needs": ["transportation"]},
@@ -88,7 +93,7 @@ CLARIFICATION_CONFIRMATION_FIELDS = {
 }
 
 
-def _normalize_clarification(value: Any) -> dict[str, str]:
+def _normalize_clarification(value: Any) -> dict[str, Any]:
     """Accept only a concise, usable clarification from the extractor."""
     if not isinstance(value, Mapping):
         return {}
@@ -100,10 +105,56 @@ def _normalize_clarification(value: Any) -> dict[str, str]:
     if not isinstance(question, str) or not question.strip():
         return {}
 
-    return {
+    normalized: dict[str, Any] = {
         "kind": kind.strip().lower(),
         "question": question.strip(),
     }
+    for field_name in ("needs", "subneeds"):
+        field_value = value.get(field_name)
+        if isinstance(field_value, list):
+            values = [
+                item.strip().lower()
+                for item in field_value
+                if isinstance(item, str) and item.strip()
+            ]
+            if values:
+                normalized[field_name] = values
+
+    return normalized
+
+
+def _confirmation_fields(clarification: Mapping[str, Any]) -> dict[str, list[str]]:
+    """Map a clarification answer to canonical fields without trusting its label."""
+    structured_fields = {
+        field_name: clarification[field_name]
+        for field_name in ("needs", "subneeds")
+        if clarification.get(field_name)
+    }
+    if structured_fields:
+        return structured_fields
+
+    kind = str(clarification.get("kind", "")).strip().lower()
+    direct_fields = CLARIFICATION_CONFIRMATION_FIELDS.get(kind)
+    if direct_fields:
+        return direct_fields
+
+    question = str(clarification.get("question", "")).lower()
+    question_intents = (
+        ("mental_health", ("mental health", "emotional", "counseling", "therapy")),
+        ("healthcare", ("healthcare", "medical", "doctor", "clinic")),
+        ("physical_activity", ("outdoor", "recreational", "park", "fitness", "sports", "workout")),
+        ("food_assistance", ("food", "groceries", "nutrition")),
+        ("housing", ("housing", "rent", "shelter")),
+        ("parenting", ("parenting", "parent education")),
+        ("childcare", ("childcare", "daycare", "after-school")),
+        ("education", ("school support", "tutoring", "education")),
+        ("transportation", ("transportation", "bus", "ride")),
+    )
+    for intent, phrases in question_intents:
+        if any(phrase in question for phrase in phrases):
+            return CLARIFICATION_CONFIRMATION_FIELDS[intent]
+
+    return {}
 
 
 def _normalize_follow_up_question(value: Any) -> str | None:
@@ -374,21 +425,23 @@ def process_intake_message(
         if extracted_data.get("needs"):
             pending_clarification = {}
         elif clarification_answer == "yes":
-            confirmation_fields = CLARIFICATION_CONFIRMATION_FIELDS.get(
-                pending_clarification.get("kind"),
-            )
+            confirmation_fields = _confirmation_fields(pending_clarification)
             if confirmation_fields:
                 extracted_data = merge_extracted_data(
                     extracted_data,
                     confirmation_fields,
                 )
-                pending_clarification = {}
+            # Whether the label was canonical, model-generated, or simply
+            # "clarification", a confirmed answer must not replay the same
+            # question forever.
+            pending_clarification = {}
         elif clarification_answer == "no":
             pending_clarification = {}
 
     if (
         not extracted_data.get("needs")
         and not pending_clarification
+        and clarification_answer not in {"yes", "no"}
     ):
         pending_clarification = (
             extractor_clarification

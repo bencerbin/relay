@@ -80,3 +80,23 @@ class RecommendationRankingTests(TestCase):
             "Matches specific request: snap_benefits.",
             wic.reasons,
         )
+
+    def test_career_request_matches_resources_with_career_support(self):
+        referral = ReferralRequest.objects.create(
+            county="Fairfield",
+            needs=["employment"],
+            subneeds=["career_support"],
+        )
+
+        results = recommend_resources(referral)
+        by_name = {result.resource_name: result for result in results}
+
+        family_centers = by_name["Family Centers"]
+        ferguson_library = by_name["Ferguson Library"]
+
+        self.assertTrue(family_centers.eligible)
+        self.assertTrue(ferguson_library.eligible)
+        self.assertIn(
+            "Matches specific request: career_support.",
+            family_centers.reasons,
+        )

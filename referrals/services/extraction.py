@@ -113,6 +113,16 @@ NEED_PHRASES = {
         "employment",
         "job training",
         "career support",
+        "career assistance",
+        "career help",
+        "career resources",
+        "career guidance",
+        "career counseling",
+        "job search",
+        "job help",
+        "help finding a job",
+        "resume help",
+        "workforce support",
     ),
 }
 
@@ -264,7 +274,20 @@ SUBNEED_PHRASES = {
     "career_support": (
         "career support",
         "career assistance",
+        "career help",
+        "career resources",
+        "career guidance",
+        "career counseling",
+        "career-growth",
+        "career growth",
+        "career-prep",
+        "career prep",
         "job training",
+        "job search",
+        "job help",
+        "help finding a job",
+        "resume help",
+        "workforce support",
     ),
     "scholarships": (
         "scholarship",
@@ -456,7 +479,11 @@ def resolve_clarification_answer(
 ) -> str | None:
     """Classify a concise answer to a pending intent confirmation."""
     text = message.strip().lower()
-    if clarification.get("kind") == "food_assistance":
+    # LLM-generated clarifications may use the generic ``clarification`` kind
+    # (or another valid label). The presence of a pending question is what
+    # makes a short yes/no reply a confirmation; limiting this to one
+    # deterministic kind causes every other confirmation to repeat forever.
+    if clarification.get("question"):
         if text in AFFIRMATIVE_CLARIFICATION_ANSWERS:
             return "yes"
         if text in NEGATIVE_CLARIFICATION_ANSWERS:

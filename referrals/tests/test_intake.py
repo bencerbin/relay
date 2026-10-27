@@ -72,13 +72,13 @@ class IntakeHelperTests(SimpleTestCase):
     def test_required_fields_include_static_and_contextual_requirements(self):
         self.assertEqual(
             get_required_fields({"needs": ["healthcare"]}),
-            ["needs", "healthcare_specialties", "county"],
+            ["needs", "county", "healthcare_specialties"],
         )
 
     def test_missing_fields_are_recalculated_from_the_current_draft(self):
         self.assertEqual(
             get_missing_required_fields({"needs": ["food_delivery"]}),
-            ["city", "county"],
+            ["county", "city"],
         )
         self.assertEqual(
             get_missing_required_fields(
@@ -104,7 +104,10 @@ class IntakeSessionTests(TestCase):
         self.assertEqual(session.status, ReferralSession.Status.COLLECTING)
         self.assertEqual(session.draft["needs"], ["food_delivery"])
         self.assertEqual(set(result["missing_fields"]), {"city", "county"})
-        self.assertEqual(result["question"], "What city are you located in?")
+        self.assertEqual(
+            result["question"],
+            "Are you located in Fairfield County?",
+        )
 
     def test_unknown_need_uses_category_disambiguation_question(self):
         session = ReferralSession.objects.create()
@@ -193,6 +196,25 @@ class IntakeSessionTests(TestCase):
             third_result["draft"]["subneeds"],
             ["food_assistance"],
         )
+
+    @override_settings(EXTRACTION_BACKEND="deterministic")
+    def test_yes_confirms_model_generated_parks_clarification(self):
+        session = ReferralSession.objects.create(
+            draft={"county": "Fairfield"},
+            pending_clarification={
+                "kind": "clarification",
+                "question": (
+                    "Do you mean you want information about recreational or "
+                    "outdoor activity resources, such as parks?"
+                ),
+            },
+        )
+
+        result = process_intake_message(session, "yeah")
+
+        self.assertEqual(result["status"], ReferralSession.Status.READY)
+        self.assertEqual(result["draft"]["needs"], ["physical_activity"])
+        self.assertEqual(result["question"], None)
 
     def test_clear_food_answer_skips_ambiguous_confirmation(self):
         session = ReferralSession.objects.create()
@@ -394,5 +416,8 @@ class SessionFinalizationTests(TestCase):
             "I need meals delivered.",
         )
 
-        self.assertEqual(result["missing_fields"], ["city", "county"])
-        self.assertEqual(result["question"], "What city are you located in?")
+        self.assertEqual(result["missing_fields"], ["county", "city"])
+        self.assertEqual(
+            result["question"],
+            "Are you located in Fairfield County?",
+        )

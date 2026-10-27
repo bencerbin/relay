@@ -35,8 +35,8 @@ button { cursor: pointer; }
 .utility-links { display: flex; gap: 20px; color: #7e878e; letter-spacing: .08em; }
 .topbar { height: 100px; max-width: 1240px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(223, 229, 232, .8); border-bottom: 1px solid rgba(223, 229, 232, .8); }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; }
-.brand-org { display: inline-flex; flex-direction: column; gap: 3px; max-width: 245px; }
-.brand-org strong { color: var(--green-dark); font: 800 14px/1.1 "Manrope", sans-serif; letter-spacing: -.025em; }
+.brand-org { display: inline-flex; flex-direction: column; gap: 3px; max-width: 360px; }
+.brand-org strong { color: var(--green-dark); font: 800 18px/1.1 "Manrope", sans-serif; letter-spacing: -.025em; }
 .brand-org small { color: #8b465b; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .brand-divider { color: #c4cdd1; font-size: 23px; font-weight: 300; }
 .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #fff; background: var(--green); box-shadow: 0 5px 12px rgba(141, 29, 61, .2); }
@@ -200,8 +200,8 @@ h1 em { color: var(--green); font-style: normal; }
   .utility-bar { font-size: 13px; letter-spacing: .08em; }
   .utility-links { gap: 9px; font-size: 8px; }
   .topbar { height: 70px; }
-  .brand-org { max-width: 145px; }
-  .brand-org strong { font-size: 10px; }
+  .brand-org { max-width: 190px; }
+  .brand-org strong { font-size: 12px; }
   .brand-org small, .brand-divider, .brand-context { display: none; }
   .brand-name { font-size: 19px; }
   .brand-mark { width: 31px; height: 31px; }

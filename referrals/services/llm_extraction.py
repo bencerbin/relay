@@ -119,8 +119,16 @@ EXTRACTION_SCHEMA = {
                     "properties": {
                         "kind": {"type": "string"},
                         "question": {"type": "string"},
+                        "needs": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "subneeds": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
                     },
-                    "required": ["kind", "question"],
+                    "required": ["kind", "question", "needs", "subneeds"],
                     "additionalProperties": False,
                 },
                 {"type": "null"},
@@ -176,6 +184,10 @@ Only return subneeds that are stated or clearly implied by the user's message.
 If a child is having a rough time, struggling, or the parent wants the child
 to talk to somebody, interpret that as a mental_health need and use
 mental_health_counseling when the message asks for someone to talk to.
+If the user asks about a job, employment, career help, career preparation,
+resume help, job training, or workforce support, return both employment as
+the need and career_support as the subneed. Do not return employment alone
+when the request clearly describes career-related assistance.
 For the current deployment, all listed resources serve Fairfield County. If
 the missing county field is answered with a confirmation such as "yes" to the
 Fairfield County question, set county to Fairfield.
@@ -184,18 +196,22 @@ list fields.
 
 If the message strongly implies a type of assistance without stating it
 clearly, return a concise clarification object with a specific question, and
-do not guess a need. For example, if someone describes being unable to afford
-food without explicitly asking for food assistance, return a question such as
+do not guess a need. Include the canonical needs and subneeds that the user
+would be confirming in that clarification object. For example, if someone
+describes being unable to afford food without explicitly asking for food
+assistance, return a question such as
 "Do you mean you want food-based assistance?". Return null when the user's
 need is clear. Never use a generic question such as "What kind of help are you
 looking for?" when a more specific confirmation is possible.
 
 Return at most one follow_up_question. Use the current draft, missing fields,
-and the user's latest message to choose the most useful next question. Ask
-about urgent or potentially time-sensitive needs first, then the requested
-service or its important details, then eligibility details such as age,
-insurance, language, or accessibility. Ask for location last. If the user's
-need is already clear and there is no useful optional question, return null.
+and the user's latest message to choose the most useful next question. Treat
+Fairfield County as a search gate: after the need is understood, confirm the
+county before asking optional eligibility questions. Ask about urgent or
+potentially time-sensitive needs next, then the requested service or its
+important details, then age, insurance, language, or accessibility. Ask for
+city only when a service requires it. If the user's need is already clear and
+there is no useful optional question, return null.
 For an acute injury, ask whether they need urgent medical care when that is
 the most important unresolved issue; do not diagnose or give medical advice.
 

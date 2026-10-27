@@ -200,11 +200,11 @@ class IntakeAPITests(APITestCase):
         self.assertEqual(response.data["draft"]["needs"], ["food_delivery"])
         self.assertEqual(
             response.data["missing_fields"],
-            ["city", "county"],
+            ["county", "city"],
         )
         self.assertEqual(
             response.data["question"],
-            "What city are you located in?",
+            "Are you located in Fairfield County?",
         )
 
     @override_settings(EXTRACTION_BACKEND="groq")
