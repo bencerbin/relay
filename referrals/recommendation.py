@@ -18,6 +18,28 @@ def normalize(value: str) -> str:
     return value.strip().lower()
 
 
+DISPLAY_LABEL_OVERRIDES = {
+    "ebt": "EBT",
+    "k-12": "K–12",
+    "snap": "SNAP",
+    "snap_benefits": "SNAP Benefits",
+    "wic": "WIC",
+}
+
+
+def display_label(value: str) -> str:
+    """Convert an internal tag into a readable label for users."""
+    normalized = normalize(value)
+    if normalized in DISPLAY_LABEL_OVERRIDES:
+        return DISPLAY_LABEL_OVERRIDES[normalized]
+    return normalized.replace("_", " ").replace("-", " ").title()
+
+
+def display_labels(values: set[str]) -> str:
+    """Format a collection of internal tags for recommendation explanations."""
+    return ", ".join(display_label(value) for value in sorted(values))
+
+
 def evaluate_resource(
     referral: ReferralRequest,
     resource: CommunityResource,
@@ -37,11 +59,17 @@ def evaluate_resource(
 
     if matching_needs:
         reasons.append(
-            f"Provides requested service: {', '.join(sorted(matching_needs))}."
+            f"Provides requested service: {display_labels(matching_needs)}."
         )
         score += 40
     else:
-        failures.append("Does not provide a requested service.")
+        requested_service_text = display_labels(referral_needs)
+        if requested_service_text:
+            failures.append(
+                f"Does not provide requested service: {requested_service_text}."
+            )
+        else:
+            failures.append("Does not provide a requested service.")
 
     requested_subneeds = {
         normalize(item) for item in referral.subneeds
@@ -59,11 +87,17 @@ def evaluate_resource(
             score += matched_subneed_score
             reasons.append(
                 "Matches specific request: "
-                f"{', '.join(sorted(matching_subneeds))}."
+                f"{display_labels(matching_subneeds)}."
             )
         elif available_subneeds:
+            service_word = (
+                "service"
+                if len(requested_subneeds) == 1
+                else "services"
+            )
             warnings.append(
-                "Does not list the requested specific service."
+                f"Does not list requested specific {service_word}: "
+                f"{display_labels(requested_subneeds)}."
             )
         else:
             warnings.append("Specific services are not documented.")
@@ -80,7 +114,7 @@ def evaluate_resource(
         if matching_specialties:
             reasons.append(
                 "Offers requested specialty: "
-                f"{', '.join(sorted(matching_specialties))}."
+                f"{display_labels(matching_specialties)}."
             )
             score += 20
         elif available_specialties:
@@ -100,7 +134,7 @@ def evaluate_resource(
         if matching_populations:
             reasons.append(
                 "Serves requested population: "
-                f"{', '.join(sorted(matching_populations))}."
+                f"{display_labels(matching_populations)}."
             )
             score += 10
         elif available_populations:
@@ -120,7 +154,7 @@ def evaluate_resource(
         if matching_modalities:
             reasons.append(
                 "Offers requested service format: "
-                f"{', '.join(sorted(matching_modalities))}."
+                f"{display_labels(matching_modalities)}."
             )
             score += 10
         elif available_modalities:
@@ -140,7 +174,7 @@ def evaluate_resource(
         if matching_purposes:
             reasons.append(
                 "Supports requested purpose: "
-                f"{', '.join(sorted(matching_purposes))}."
+                f"{display_labels(matching_purposes)}."
             )
             score += 10
         elif available_purposes:
@@ -148,13 +182,14 @@ def evaluate_resource(
         else:
             warnings.append("Program purpose is not documented.")
 
-    counties = {normalize(item) for item in resource.counties_served}
+    if referral.county:
+        counties = {normalize(item) for item in resource.counties_served}
 
-    if normalize(referral.county) in counties:
-        reasons.append(f"Serves {referral.county} County.")
-        score += 25
-    else:
-        failures.append(f"Does not serve {referral.county} County.")
+        if normalize(referral.county) in counties:
+            reasons.append(f"Serves {referral.county} County.")
+            score += 25
+        else:
+            failures.append(f"Does not serve {referral.county} County.")
 
     if referral.city:
         cities = {normalize(item) for item in resource.cities_served}

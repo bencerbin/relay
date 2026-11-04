@@ -12,8 +12,6 @@ from .extraction import (
     extract_fields,
     resolve_clarification_answer,
 )
-from .constants import SERVICE_AREA_COUNTY
-
 Draft = dict[str, Any]
 
 REQUEST_FIELDS = frozenset(
@@ -46,12 +44,11 @@ LIST_FIELDS = frozenset(
 
 STATIC_REQUIRED_FIELDS = frozenset({
     "needs",
-    "county",
 })
 
 CONTEXT_REQUIRED_FIELDS = {
     "healthcare": frozenset({"healthcare_specialties"}),
-    "food_delivery": frozenset({"city"}), #THIS IS SOMETHING THAT MIGHT NEED  TO CHANGE... CAN WE USE ZIP CODE? ADDRESS?
+    "food_delivery": frozenset(),
     "housing": frozenset(),
 }
 
@@ -61,8 +58,6 @@ FIELD_QUESTIONS = {
         "you need help with food and nutrition, physical activity, "
         "emotional well-being, or healthcare?"
     ),
-    "county": f"Are you located in {SERVICE_AREA_COUNTY} County?",
-    "city": "What city are you located in?",
     "healthcare_specialties": "What type of healthcare specialty do you need?",
 }
 
@@ -307,12 +302,7 @@ def get_required_fields(draft: Mapping[str, Any]) -> list[str]:
     """Return the complete requirement set for the current draft."""
     required_fields = set(STATIC_REQUIRED_FIELDS)
     required_fields.update(get_contextual_required_fields(draft))
-    preferred_order = (
-        "needs",
-        "county",
-        "healthcare_specialties",
-        "city",
-    )
+    preferred_order = ("needs", "healthcare_specialties")
     ordered_fields = [
         field_name
         for field_name in preferred_order
@@ -396,23 +386,10 @@ def process_intake_message(
         if pending_clarification
         else None
     )
-    extraction_missing_fields = previous_missing_fields
-    if (
-        pending_clarification
-        and clarification_answer in {"yes", "no"}
-    ):
-        # Do not interpret the confirmation as a response to a later county
-        # question in the same turn. County is collected immediately after
-        # the need because it gates whether searching is possible.
-        extraction_missing_fields = [
-            field_name
-            for field_name in previous_missing_fields
-            if field_name not in {"county", "city"}
-        ]
     extracted_data = extract_fields(
         message,
         current_draft=session_snapshot.draft,
-        missing_fields=extraction_missing_fields,
+        missing_fields=previous_missing_fields,
     )
     extractor_clarification = _normalize_clarification(
         extracted_data.pop("clarification", None)

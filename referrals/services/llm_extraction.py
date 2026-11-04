@@ -143,8 +143,6 @@ EXTRACTION_SCHEMA = {
     },
     "required": [
         "age",
-        "county",
-        "city",
         "preferred_language",
         "insurance_type",
         "wheelchair",
@@ -188,9 +186,6 @@ If the user asks about a job, employment, career help, career preparation,
 resume help, job training, or workforce support, return both employment as
 the need and career_support as the subneed. Do not return employment alone
 when the request clearly describes career-related assistance.
-For the current deployment, all listed resources serve Fairfield County. If
-the missing county field is answered with a confirmation such as "yes" to the
-Fairfield County question, set county to Fairfield.
 If a value is not present, return null for scalar fields or an empty list for
 list fields.
 
@@ -205,13 +200,11 @@ need is clear. Never use a generic question such as "What kind of help are you
 looking for?" when a more specific confirmation is possible.
 
 Return at most one follow_up_question. Use the current draft, missing fields,
-and the user's latest message to choose the most useful next question. Treat
-Fairfield County as a search gate: after the need is understood, confirm the
-county before asking optional eligibility questions. Ask about urgent or
-potentially time-sensitive needs next, then the requested service or its
-important details, then age, insurance, language, or accessibility. Ask for
-city only when a service requires it. If the user's need is already clear and
-there is no useful optional question, return null.
+and the user's latest message to choose the most useful next question. Ask
+about urgent or potentially time-sensitive needs next, then the requested
+service or its important details, then age, insurance, language, or
+accessibility. If the user's need is already clear and there is no useful
+optional question, return null.
 For an acute injury, ask whether they need urgent medical care when that is
 the most important unresolved issue; do not diagnose or give medical advice.
 
@@ -230,8 +223,8 @@ When the missing field is healthcare_specialties, interpret concise answers
 such as "general", "pediatrics", or "dental" using those mappings rather
 than asking the same specialty question again.
 
-The current draft and missing fields are context. They help interpret short
-follow-up answers such as a city name answering a pending city question.
+The current draft and missing fields are context for interpreting short
+follow-up answers.
 """.strip()
 
 

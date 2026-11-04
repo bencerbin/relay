@@ -21,9 +21,12 @@
   const memberCards = [...document.querySelectorAll("[data-member-card]")];
   const memberCount = document.querySelector("[data-member-count]");
   const memberEmpty = document.querySelector("[data-member-empty]");
+  const memberQuickFilters = [...document.querySelectorAll("[data-member-quick-filter]")];
+  const memberClearFilters = document.querySelector("[data-member-clear-filters]");
 
   let sessionId = null;
   let isReady = false;
+  const activeMemberFilters = new Set();
 
   const labels = {
     food: "food & nutrition",
@@ -179,16 +182,21 @@
     if (!memberFilter || !memberCount) return;
 
     const query = memberFilter.value.trim().toLowerCase();
+    const selectedFilters = [...activeMemberFilters];
     let visibleCount = 0;
 
     memberCards.forEach((card) => {
-      const matches = !query || card.dataset.memberSearch.includes(query);
+      const tags = (card.dataset.memberTags || "").toLowerCase().split(/\s+/).filter(Boolean);
+      const matchesSearch = !query || card.dataset.memberSearch.includes(query);
+      const matchesFilters = selectedFilters.every((filter) => tags.includes(filter));
+      const matches = matchesSearch && matchesFilters;
       card.hidden = !matches;
       if (matches) visibleCount += 1;
     });
 
     memberCount.textContent = `${visibleCount} member${visibleCount === 1 ? "" : "s"}`;
     if (memberEmpty) memberEmpty.hidden = visibleCount !== 0;
+    if (memberClearFilters) memberClearFilters.hidden = activeMemberFilters.size === 0;
   }
 
   form.addEventListener("submit", async (event) => {
@@ -255,6 +263,29 @@
   });
 
   if (memberFilter) memberFilter.addEventListener("input", updateMemberDirectory);
+
+  memberQuickFilters.forEach((button) => {
+    button.addEventListener("click", () => {
+      const filter = button.dataset.memberQuickFilter;
+      if (!filter) return;
+
+      if (activeMemberFilters.has(filter)) {
+        activeMemberFilters.delete(filter);
+      } else {
+        activeMemberFilters.add(filter);
+      }
+      button.setAttribute("aria-pressed", String(activeMemberFilters.has(filter)));
+      updateMemberDirectory();
+    });
+  });
+
+  if (memberClearFilters) {
+    memberClearFilters.addEventListener("click", () => {
+      activeMemberFilters.clear();
+      memberQuickFilters.forEach((button) => button.setAttribute("aria-pressed", "false"));
+      updateMemberDirectory();
+    });
+  }
 
   startOver.addEventListener("click", () => window.location.reload());
   editReferral.addEventListener("click", () => {

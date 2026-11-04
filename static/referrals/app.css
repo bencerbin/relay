@@ -155,6 +155,15 @@ h1 em { color: var(--green); font-style: normal; }
 .directory-search svg { width: 17px; flex: 0 0 auto; }
 .directory-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 12px; }
 .directory-search input::placeholder { color: #a6b1ab; }
+.directory-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 9px 12px; margin-top: 24px; }
+.directory-filters-label { color: #87958d; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.directory-filter-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.directory-filter, .directory-filter-clear { padding: 7px 10px; border: 1px solid #d5e1e4; border-radius: 999px; color: var(--green); background: #fff; font-size: 11px; font-weight: 700; transition: .2s ease; }
+.directory-filter:hover, .directory-filter[aria-pressed="true"] { border-color: #c78a9b; background: #fcf4f6; }
+.directory-filter[aria-pressed="true"] { box-shadow: inset 0 0 0 1px #c78a9b; }
+.directory-filter-clear { border-color: transparent; color: #87958d; background: transparent; }
+.directory-filter-clear:hover { color: var(--green); text-decoration: underline; }
+.directory-filter-clear[hidden] { display: none; }
 .directory-meta { display: flex; justify-content: space-between; gap: 20px; margin: 36px 0 16px; color: #9aa8a0; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .directory-meta span:first-child { color: var(--green); }
 .member-directory { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

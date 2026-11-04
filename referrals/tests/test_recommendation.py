@@ -22,7 +22,7 @@ class RecommendationRankingTests(TestCase):
         self.assertGreater(boys_and_girls.score, american_heart.score)
         self.assertGreater(chelsea_piers.score, american_heart.score)
         self.assertIn(
-            "Matches specific request: sports_league.",
+            "Matches specific request: Sports League.",
             boys_and_girls.reasons,
         )
 
@@ -40,7 +40,7 @@ class RecommendationRankingTests(TestCase):
         boys_and_girls = by_name["Boys & Girls Club of Stamford"]
 
         self.assertIn(
-            "Matches specific request: physical_fitness.",
+            "Matches specific request: Physical Fitness.",
             american_heart.reasons,
         )
         self.assertGreater(american_heart.score, boys_and_girls.score)
@@ -77,7 +77,7 @@ class RecommendationRankingTests(TestCase):
         self.assertTrue(wic.eligible)
         self.assertEqual(wic.score, 100)
         self.assertIn(
-            "Matches specific request: snap_benefits.",
+            "Matches specific request: SNAP Benefits.",
             wic.reasons,
         )
 
@@ -93,10 +93,19 @@ class RecommendationRankingTests(TestCase):
 
         family_centers = by_name["Family Centers"]
         ferguson_library = by_name["Ferguson Library"]
+        american_heart = by_name["American Heart Association"]
 
         self.assertTrue(family_centers.eligible)
         self.assertTrue(ferguson_library.eligible)
         self.assertIn(
-            "Matches specific request: career_support.",
+            "Matches specific request: Career Support.",
             family_centers.reasons,
+        )
+        self.assertIn(
+            "Does not provide requested service: Employment.",
+            american_heart.reasons,
+        )
+        self.assertIn(
+            "Does not list requested specific service: Career Support.",
+            american_heart.warnings,
         )

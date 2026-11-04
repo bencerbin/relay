@@ -66,7 +66,7 @@
             <div class="conversation" data-conversation aria-live="polite">
               <div class="message relay-message">
                 <span class="avatar relay-avatar" aria-hidden="true">r</span>
-                <div class="message-body"><span class="sender-label">Relay <span>• now</span></span><p>Hi there. I’m here to help you find local support. What do you need help with today?</p></div>
+                <div class="message-body"><span class="sender-label">Relay <span>• now</span></span><p>Hi there. We're here to help you find local support. What do you need help with today?</p></div>
               </div>
               <div class="quick-prompts" data-quick-prompts>
                 <button type="button" data-prompt="I need help with food or nutrition for my child">Food & nutrition</button>
@@ -117,13 +117,27 @@
             <input type="search" data-member-filter placeholder="Search members or services" autocomplete="off">
           </label>
         </div>
+        <div class="directory-filters" aria-label="Quickly filter member organizations">
+          <span class="directory-filters-label">Quick filters</span>
+          <div class="directory-filter-list">
+            <button type="button" class="directory-filter" data-member-quick-filter="food" aria-pressed="false">Food &amp; nutrition</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="physical_activity" aria-pressed="false">Physical activity</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="mental_health" aria-pressed="false">Emotional well-being</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="healthcare" aria-pressed="false">Healthcare</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="childcare" aria-pressed="false">Childcare &amp; after-school</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="parenting" aria-pressed="false">Parenting &amp; family</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="education" aria-pressed="false">Education</button>
+            <button type="button" class="directory-filter" data-member-quick-filter="employment" aria-pressed="false">Career support</button>
+          </div>
+          <button type="button" class="directory-filter-clear" data-member-clear-filters hidden>Clear filters</button>
+        </div>
         <div class="directory-meta">
           <span data-member-count>{{ members|length }} members</span>
           <span>Scroll to browse the full directory</span>
         </div>
         <div class="member-directory" data-member-directory>
           {% for member in members %}
-            <article class="member-card" data-member-card data-member-search="{{ member.name|lower }} {{ member.description|lower }}">
+            <article class="member-card" data-member-card data-member-search="{{ member.name|lower }} {{ member.description|lower }}" data-member-tags="{{ member.needs_addressed|join:' ' }} {{ member.subneeds|join:' ' }}">
               <div class="member-card-heading">
                 <div class="member-logo-wrap">
                   {% if member.logo %}
@@ -161,6 +175,6 @@
       <p class="dialog-footnote">Relay is a community connection tool, not a substitute for emergency or medical care.</p>
     </dialog>
 
-    <script src="{% static 'referrals/app.js' %}?v=20261016-1"></script>
+    <script src="{% static 'referrals/app.js' %}?v=20261027-2"></script>
   </body>
 </html>

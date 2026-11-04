@@ -93,9 +93,10 @@ class RecommendationAPITests(APITestCase):
         self.assertTrue(eligible_result["eligible"])
         self.assertGreater(eligible_result["score"], 0)
 
-    def test_invalid_request_returns_bad_request_and_creates_no_referral(self):
+    def test_location_fields_are_optional(self):
         payload = self.valid_payload()
         payload.pop("county")
+        payload.pop("city")
 
         response = self.client.post(
             self.url,
@@ -103,9 +104,15 @@ class RecommendationAPITests(APITestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("county", response.data)
-        self.assertEqual(ReferralRequest.objects.count(), 0)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ReferralRequest.objects.count(), 1)
+        self.assertEqual(response.data["referral"]["county"], "")
+        self.assertEqual(response.data["referral"]["city"], "")
+
+        recommendations = response.data["recommendations"]
+        self.assertTrue(
+            all(recommendation["eligible"] for recommendation in recommendations)
+        )
 
     def test_empty_needs_returns_bad_request(self):
         payload = self.valid_payload()
@@ -200,12 +207,9 @@ class IntakeAPITests(APITestCase):
         self.assertEqual(response.data["draft"]["needs"], ["food_delivery"])
         self.assertEqual(
             response.data["missing_fields"],
-            ["county", "city"],
+            [],
         )
-        self.assertEqual(
-            response.data["question"],
-            "Are you located in Fairfield County?",
-        )
+        self.assertIsNone(response.data["question"])
 
     @override_settings(EXTRACTION_BACKEND="groq")
     def test_unavailable_groq_returns_service_unavailable(self):
